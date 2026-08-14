@@ -1,0 +1,93 @@
+cabal-version: 3.0
+name: circuits-diff
+version: 0.1.0.0
+license: BSD-3-Clause
+license-file: LICENSE
+copyright: Tony Day (c) 2025
+category: math
+author: Tony Day
+maintainer: tonyday567@gmail.com
+homepage: https://github.com/tonyday567/circuits-diff#readme
+bug-reports: https://github.com/tonyday567/circuits-diff/issues
+synopsis: Reverse-mode automatic differentiation for circuits.
+description:
+  circuits-diff provides the 'Diff' carrier and the circuits ecosystem's
+  automatic-differentiation toolkit: jets, inverse functions, reverse
+  differential categories, curvature, charts, star-elimination, and
+  parameterised differentiable arrows.  Everything lives under the
+  'Circuit.Diff' namespace.
+
+build-type: Simple
+tested-with:
+  ghc ==9.12.2
+  ghc ==9.14.1
+
+extra-doc-files:
+  ChangeLog.md
+  readme.md
+
+source-repository head
+  type: git
+  location: https://github.com/tonyday567/circuits-diff
+
+common ghc-options-stanza
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wpartial-fields
+    -Wredundant-constraints
+    -Wno-orphans
+
+library
+  import: ghc-options-stanza
+  default-language: GHC2024
+  hs-source-dirs: src
+  build-depends:
+    base >=4.18 && <5,
+    circuits >=0.3 && <0.5,
+    circuits-mat >=0.1 && <0.2,
+    harpie >=0.3 && <0.4,
+    numhask >=0.14 && <0.15,
+    transformers >=0.5 && <0.7,
+  exposed-modules:
+    Circuit.Diff,
+    Circuit.Diff.Backprop,
+    Circuit.Diff.Chart,
+    Circuit.Diff.Circuit,
+    Circuit.Diff.Curvature,
+    Circuit.Diff.Curvature.Surface,
+    Circuit.Diff.Daisyworld,
+    Circuit.Diff.DubinsChase,
+    Circuit.Diff.Eliminate,
+    Circuit.Diff.Inverse,
+    Circuit.Diff.Jet,
+    Circuit.Diff.Melt,
+    Circuit.Diff.Metric,
+    Circuit.Diff.Param,
+    Circuit.Diff.Pullback,
+    Circuit.Diff.RDC,
+    Circuit.Diff.Star,
+
+executable circuits-diff-axioma
+  import: ghc-options-stanza
+  main-is: axioma.hs
+  hs-source-dirs: app
+  other-modules:
+    Curvature
+    DiffCarrierTests
+    DubinsChase
+    GeodesicFlow
+    Kepler
+    MatrixStar
+    MetricAdjoint
+    StarEliminate
+    Tags
+  build-depends:
+    base >=4.18 && <5,
+    circuits,
+    circuits-diff,
+    circuits-mat,
+    numhask >=0.14 && <0.15,
+  default-language: GHC2024
