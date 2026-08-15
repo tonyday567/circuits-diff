@@ -41,7 +41,7 @@ where
 
 import Circuit.Category (Category (..), Discrete (..), ObDict (..))
 import Circuit.Channel (Channel (..))
-import Circuit.Dagger (CopyDiscard (..), MergeZero (..))
+import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 import Circuit.Dagger qualified as CD
 import Circuit.Tensor (Action (..), Tensor (..))
 import Data.Bifunctor
@@ -51,7 +51,7 @@ import Prelude hiding (id, (.))
 -- $setup
 -- >>> import Circuit.Diff.Param
 -- >>> import Circuit.Category (Category (..))
--- >>> import Circuit.Dagger (CopyDiscard (..), MergeZero (..))
+-- >>> import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 -- >>> import Circuit.Tensor (Action (..), Tensor (..))
 -- >>> import Circuit.Diff (Diff' (..), Diff, runDiff)
 -- >>> import Prelude hiding (id, (.))
@@ -213,10 +213,11 @@ instance (MergeZero (->) p) => Action (,) (DiffP p) where
 -- >>> let (_, pb) = runDiffP copy () (5 :: Int)
 -- >>> pb (1, 2)
 -- (3,())
-instance (MergeZero (->) a, MergeZero (->) p) => CopyDiscard (DiffP p) a where
+instance (Merge (->) a, Zero (->) p) => Copy (DiffP p) a where
   copy = DiffP $ \_ a -> ((a, a), \(da1, da2) -> (CD.plus (da1, da2), CD.zero ()))
   {-# INLINE copy #-}
 
+instance (Zero (->) a, Zero (->) p) => Discard (DiffP p) a where
   discard = DiffP $ \_ _ -> ((), const (CD.zero (), CD.zero ()))
   {-# INLINE discard #-}
 
@@ -226,10 +227,11 @@ instance (MergeZero (->) a, MergeZero (->) p) => CopyDiscard (DiffP p) a where
 -- >>> let (_, pb) = runDiffP plus () ((3, 4) :: (Int, Int))
 -- >>> pb 1
 -- ((1,1),())
-instance (MergeZero (->) a, MergeZero (->) p) => MergeZero (DiffP p) a where
+instance (Merge (->) a, Zero (->) p) => Merge (DiffP p) a where
   plus = DiffP $ \_ (a, b) -> (CD.plus (a, b), \d -> ((d, d), CD.zero ()))
   {-# INLINE plus #-}
 
+instance (Zero (->) a, Zero (->) p) => Zero (DiffP p) a where
   zero = DiffP $ \_ () -> (CD.zero (), const ((), CD.zero ()))
   {-# INLINE zero #-}
 

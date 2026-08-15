@@ -24,7 +24,7 @@ module Circuit.Diff.Backprop
   )
 where
 
-import Circuit.Dagger (CopyDiscard (..), MergeZero (..))
+import Circuit.Dagger (Copy (..), Discard (..), Merge (..), Zero (..))
 import Circuit.Diff (Diff', data Diff, runDiff)
 import Circuit.Diff.Circuit ()
 import Circuit.Diff.Pullback (Pullback (..))

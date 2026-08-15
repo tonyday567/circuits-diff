@@ -32,7 +32,7 @@ where
 
 import Circuit.Category (Category (..), Discrete (..), ObDict (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
-import Circuit.Dagger (CopyDiscard (..), MergeZero (..))
+import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 import Circuit.Dagger qualified as CD
 import Circuit.Diff (Diff, Diff', pattern Diff, runDiff)
 import Circuit.Tensor (Action (..), Tensor (..))
@@ -201,10 +201,11 @@ instance Traced Either (Diff' p) where
      in (c, pullback)
 
 -- ---------------------------------------------------------------------------
--- CopyDiscard Diff — copy and discard for the differentiable arrow.
+-- Copy / Discard / Merge / Zero for Diff — the bimonoid structure of the
+-- differentiable arrow.
 --
 -- In Diff, the bimonoid is self-dual under differentiation: copy's pullback
--- is plus, discard's pullback is zero, plus's pullback is dup, zero's
+-- is plus, discard's pullback is zero, plus's pullback is copy, zero's
 -- pullback is discard.  transpose's Copy ↔ Add, Discard ↔ Zero table is
 -- not a rule imposed on syntax — it's the instance structure of Diff read
 -- off at the semantic level.
@@ -212,14 +213,15 @@ instance Traced Either (Diff' p) where
 -- | Copy in D: the pullback is 'plus' (fan-in on the backward pass).
 --
 -- >>> import Circuit.Tensor (Action(..))
--- >>> import Circuit.Dagger (CopyDiscard(..))
--- >>> let (_, pb) = runDiff (dup :: Diff Int (Int, Int)) 5
+-- >>> import Circuit.Dagger (Copy(..), Merge(..))
+-- >>> let (_, pb) = runDiff (copy :: Diff Int (Int, Int)) 5
 -- >>> pb (1, 2)
 -- 3
-instance (MergeZero (->) a) => CopyDiscard (Diff' p) a where
+instance (Merge (->) a) => Copy (Diff' p) a where
   copy = Diff (\a -> ((a, a), CD.plus))
   {-# INLINE copy #-}
 
+instance (Zero (->) a) => Discard (Diff' p) a where
   discard = Diff (const ((), \() -> CD.zero ()))
   {-# INLINE discard #-}
 
@@ -228,10 +230,11 @@ instance (MergeZero (->) a) => CopyDiscard (Diff' p) a where
 -- >>> let (_, pb) = runDiff (plus :: Diff (Int, Int) Int) (3, 4)
 -- >>> pb 1
 -- (1,1)
-instance (MergeZero (->) a) => MergeZero (Diff' p) a where
+instance (Merge (->) a) => Merge (Diff' p) a where
   plus = Diff (\(a, b) -> (CD.plus (a, b), \d -> (d, d)))
   {-# INLINE plus #-}
 
+instance (Zero (->) a) => Zero (Diff' p) a where
   zero = Diff (\() -> (CD.zero (), const ()))
   {-# INLINE zero #-}
 

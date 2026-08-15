@@ -22,9 +22,9 @@ runMatrixStarTests = do
      in starMatrix m == fromLists [[Warshall True, Warshall True], [Warshall False, Warshall True]]
 
   assert "Floyd-Warshall shortest paths" $
-    let inf = MinPlus (1 / 0)
-        m = fromLists [[MinPlus 0, MinPlus 3, inf], [inf, MinPlus 0, MinPlus 1], [MinPlus 2, inf, MinPlus 0]]
-        expected = fromLists [[MinPlus 0, MinPlus 3, MinPlus 4], [MinPlus 3, MinPlus 0, MinPlus 1], [MinPlus 2, MinPlus 5, MinPlus 0]]
+    let inf = MinPlus (1 / 0 :: Double)
+        m = fromLists [[MinPlus 0, MinPlus 3, inf], [inf, MinPlus 0, MinPlus 1], [MinPlus 2, inf, MinPlus 0]] :: Matrix (MinPlus Double)
+        expected = fromLists [[MinPlus 0, MinPlus 3, MinPlus 4], [MinPlus 3, MinPlus 0, MinPlus 1], [MinPlus 2, MinPlus 5, MinPlus 0]] :: Matrix (MinPlus Double)
      in starMatrix m == expected
 
   assert "Field star matrix inversion" $

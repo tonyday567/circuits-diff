@@ -27,7 +27,7 @@ where
 
 import Circuit.Category (Category (..), Discrete (..), ObDict (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
-import Circuit.Dagger (CopyDiscard (..), MergeZero (..))
+import Circuit.Dagger (Copy (..), Discard (..), Merge (..), Zero (..))
 import Circuit.Layer (run)
 import Circuit.Tensor (Action (..), Tensor (..))
 import Circuit.Net (Net)
@@ -36,7 +36,7 @@ import Prelude hiding (id, (.))
 
 -- $setup
 -- >>> import Circuit.Category (Category (..))
--- >>> import Circuit.Dagger (CopyDiscard (..), MergeZero (..))
+-- >>> import Circuit.Dagger (Copy (..), Discard (..), Merge (..), Zero (..))
 -- >>> import Circuit.Channel (Channel (..), Strength (..), Traced (..))
 -- >>> import Circuit.Tensor (Action (..), Tensor (..))
 -- >>> import Circuit.Net (Net (..))
@@ -136,10 +136,11 @@ instance Traced (,) Pullback where
 -- permits, drop the constraint; keeping a stray @Additive@ here reads
 -- as \"addition happens in this instance\", which is exactly the
 -- confusion the paragraph above tries to dispel.
-instance CopyDiscard Pullback a where
+instance Copy Pullback a where
   copy = Pullback (\b -> (b, b))
   {-# INLINE copy #-}
 
+instance Discard Pullback a where
   discard = Pullback (const ())
   {-# INLINE discard #-}
 
@@ -151,10 +152,11 @@ instance CopyDiscard Pullback a where
 -- 3
 -- >>> runPullback (zero :: Pullback () Int) ()
 -- 0
-instance (MergeZero (->) a) => MergeZero Pullback a where
+instance (Merge (->) a) => Merge Pullback a where
   plus = Pullback (\(b1, b2) -> plus (b1, b2))
   {-# INLINE plus #-}
 
+instance (Zero (->) a) => Zero Pullback a where
   zero = Pullback (\() -> zero ())
   {-# INLINE zero #-}
 

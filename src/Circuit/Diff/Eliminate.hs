@@ -133,8 +133,10 @@ instance
 -- 'Circuit.Diff.Backprop.linearizeNet' never need this — their structural rows are
 -- already 'Lift's.)  Deliberately orphan: this module is the federation
 -- seam between @circuits@ and @numhask-free@.
-instance Circuit.Dagger.MergeZero (->) FieldStar where
+instance Circuit.Dagger.Merge (->) FieldStar where
   plus (FieldStar x, FieldStar y) = FieldStar (x P.+ y)
+
+instance Circuit.Dagger.Zero (->) FieldStar where
   zero _ = FieldStar 0
 
 -- | Solve one affine knot body in closed form.
