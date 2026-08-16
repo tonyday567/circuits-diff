@@ -42,6 +42,10 @@ import NumHask.Algebra.Multiplicative qualified as NHM
 import NumHask.Algebra.Ring qualified as NHR
 import Prelude hiding (id, (.))
 
+-- $setup
+-- >>> import Circuit.Dagger (Copy (..), Merge (..))
+-- >>> import Circuit.Tensor (Action (..), Tensor (..))
+
 -- | 'Circuit.Category.Category' for 'Diff''.
 --
 -- 'Circuit.Diff' still provides 'Control.Category'; circuits needs the local
