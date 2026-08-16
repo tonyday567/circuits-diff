@@ -22,7 +22,7 @@
 -- instance resolution.  @f s = sin s^2 + s^3@ at @s = 2@: value
 -- @sin 4 + 8@, gradient @4*cos 4 + 12@.
 --
--- >>> import Circuit.Diff (Diff, pattern Diff, runDiff)
+-- >>> import Circuit.Diff
 -- >>> import NumHask.Algebra.Additive qualified as NHA
 -- >>> import NumHask.Algebra.Multiplicative qualified as NHM
 -- >>> import NumHask.Algebra.Field qualified as NHF

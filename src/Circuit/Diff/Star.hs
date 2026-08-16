@@ -44,7 +44,7 @@ import NumHask.Free.Carriers (FieldStar (..))
 import Prelude hiding (id, (.))
 
 -- $setup
--- >>> import Circuit.Diff.Circuit (Diff (..))
+-- >>> import Circuit.Diff.Circuit
 -- >>> import Prelude hiding (id, (.))
 
 -- | Trace over a /vector/ feedback channel, backward pass solved by

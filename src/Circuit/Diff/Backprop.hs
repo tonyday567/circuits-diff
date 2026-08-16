@@ -33,8 +33,10 @@ import Circuit.Net (Net (..))
 import Prelude hiding (id, (.))
 
 -- $setup
+-- >>> import Circuit.Diff
+-- >>> import Circuit.Dagger qualified as CD
 -- >>> import Circuit.Net (Net (..))
--- >>> import Circuit.Diff.Pullback (evalPullback)
+-- >>> import Circuit.Diff.Pullback (Pullback (..), evalPullback)
 -- >>> import Prelude hiding (id, (.))
 
 -- | Pointwise linearization: run a 'Net Diff' forward at @a@ and

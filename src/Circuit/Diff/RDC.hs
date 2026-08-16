@@ -61,7 +61,7 @@ import Prelude qualified as P
 -- point @a@ and an output cotangent @db@ to the input cotangent @da@.
 --
 -- >>> import NumHask.Algebra.Field qualified as NHField
--- >>> import Circuit.Diff (Diff, runDiff)
+-- >>> import Circuit.Diff
 -- >>> let x = Diff (\s -> (s, \db -> db)) :: Diff Double Double
 -- >>> rdc (NHField.sin x) (0.0, 1.0)
 -- 1.0
