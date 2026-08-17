@@ -4,7 +4,7 @@
 
 -- | Star-elimination of @(,)@ knots in linear 'Pullback' nets.
 --
--- A 'Net (,) Pullback' built by 'Circuit.Diff.Backprop.linearizeNet' is linear by
+-- A 'Net (,) (,) Pullback' built by 'Circuit.Diff.Backprop.linearizeNet' is linear by
 -- construction: every 'Lift' is a pointwise pullback, every 'Compose' is
 -- function composition, and every 'Trace' ties an affine feedback equation.
 -- This module eliminates those knots in closed form using the Kleene star
@@ -193,7 +193,7 @@ solveAffine dim body dc =
 --
 -- >>> :{
 -- let body (FieldStar dj, dc) = (FieldStar (0.3 * dj + 2.0 * dc), dj)
---     net = Knot (Lift (Pullback body)) :: Net (,) Pullback Double Double
+--     net = Knot (Lift (Pullback body)) :: Net (,) (,) Pullback Double Double
 -- :}
 --
 -- >>> let solved = eliminateKnots (FieldStar 0) net
@@ -203,13 +203,13 @@ eliminateKnots ::
   forall j b a.
   (StarChannel j) =>
   j ->
-  Net (,) Pullback b a ->
-  Net (,) Pullback b a
+  Net (,) (,) Pullback b a ->
+  Net (,) (,) Pullback b a
 eliminateKnots witness net = go (melt net)
   where
     dim = channelDim witness
 
-    go :: forall x y. Net (,) Pullback x y -> Net (,) Pullback x y
+    go :: forall x y. Net (,) (,) Pullback x y -> Net (,) (,) Pullback x y
     go n = case n of
       Lift p -> Lift p
       Compose g f -> Compose (go g) (go f)
@@ -219,7 +219,7 @@ eliminateKnots witness net = go (melt net)
         let f' = go f -- innermost first: body is knot-free below here
             body =
               runPullback
-                (run (unsafeCoerce f' :: Net (,) Pullback (j, x) (j, y)))
+                (run (unsafeCoerce f' :: Net (,) (,) Pullback (j, x) (j, y)))
          in Lift (Pullback (solveAffine dim body))
       Copy -> unreachableRow "Copy"
       Discard -> unreachableRow "Discard"

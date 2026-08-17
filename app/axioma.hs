@@ -42,7 +42,7 @@ constD :: Double -> Diff Double Double
 constD c = Diff (const (c, const 0))
 
 -- | Net computing 2*x^2 via copy, parallel squares, then add.
-quadNet :: Net (,) Diff Double Double
+quadNet :: Net (,) (,) Diff Double Double
 quadNet = Compose Plus (Compose (Par (Lift sq) (Lift sq)) Copy)
 
 -- | Linear feedback loop: x' = 0.3*x + 2*b, c = x + b.
@@ -117,8 +117,8 @@ main = do
               ((0.0, x + 2.0 * b), \(dx, dc) -> (dc, 2.0 * dc))
           ) ::
           Diff (Double, Double) (Double, Double)
-      innerKnot = Knot (Lift innerBody) :: Net (,) Diff Double Double
-      net = Par (Lift sq) innerKnot :: Net (,) Diff (Double, Double) (Double, Double)
+      innerKnot = Knot (Lift innerBody) :: Net (,) (,) Diff Double Double
+      net = Par (Lift sq) innerKnot :: Net (,) (,) Diff (Double, Double) (Double, Double)
       (y7, g7) = backprop net (3.0, 4.0)
       (gx, gb) = evalPullback g7 (1.0, 1.0)
   assert "value fst" (fst y7) 9.0

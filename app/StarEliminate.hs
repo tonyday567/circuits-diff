@@ -7,7 +7,7 @@ module StarEliminate
 where
 
 import Circuit.Diff.Backprop (backprop)
-import Circuit.Diff.Circuit (Diff, Diff', pattern Diff)
+import Circuit.Diff.Circuit (Diff', pattern Diff)
 import Circuit.Diff.Eliminate (eliminateKnots)
 import Circuit.Diff.Pullback (Pullback (..), evalPullback)
 import Circuit.Net (Net (..))
@@ -31,7 +31,7 @@ assert name got expected =
 --
 -- The trace equation is @dx = 0.5*dx + dc@, solved by @dx = 2*dc@.
 -- Then @db = dx + 2*dc = 4*dc@.
-scalarKnot :: Net (,) Pullback FieldStar FieldStar
+scalarKnot :: Net (,) (,) Pullback FieldStar FieldStar
 scalarKnot =
   Knot
     ( Lift
@@ -70,7 +70,7 @@ runStarEliminateTests = do
                 FieldStar (dx1 + dx2 + dc)
               ) ::
                 ([FieldStar], FieldStar)
-      vecKnot = Knot (Lift vecBody) :: Net (,) Pullback FieldStar FieldStar
+      vecKnot = Knot (Lift vecBody) :: Net (,) (,) Pullback FieldStar FieldStar
       eliminatedVec = eliminateKnots [FieldStar 0, FieldStar 0] vecKnot
       FieldStar gVec = evalPullback eliminatedVec (FieldStar 1.0)
       expectedVec = (30.0 / 11.0) + (40.0 / 11.0) + 1.0
@@ -79,14 +79,14 @@ runStarEliminateTests = do
   putStrLn "Melt structural rows around a knot"
   let copiedKnot =
         Compose Plus (Compose (Par scalarKnot scalarKnot) Copy) ::
-          Net (,) Pullback FieldStar FieldStar
+          Net (,) (,) Pullback FieldStar FieldStar
       eliminatedCopy = eliminateKnots (FieldStar 0) copiedKnot
       FieldStar gCopy = evalPullback eliminatedCopy (FieldStar 1.0)
   assert "melted copy-add around knot" gCopy 8.0
 
   putStrLn "Star-eliminate via composition"
   let scale3 = Lift (Pullback (\(FieldStar x) -> FieldStar (3.0 * x)))
-      nested = Compose scale3 scalarKnot :: Net (,) Pullback FieldStar FieldStar
+      nested = Compose scale3 scalarKnot :: Net (,) (,) Pullback FieldStar FieldStar
       eliminatedNested = eliminateKnots (FieldStar 0) nested
       FieldStar gNested = evalPullback eliminatedNested (FieldStar 1.0)
   assert "composition" gNested 12.0
@@ -104,7 +104,7 @@ runStarEliminateTests = do
               )
           ) ::
           Diff' () (FieldStar, FieldStar) (FieldStar, FieldStar)
-      innerKnot = Knot (Lift innerBody) :: Net (,) (Diff' ()) FieldStar FieldStar
+      innerKnot = Knot (Lift innerBody) :: Net (,) (,) (Diff' ()) FieldStar FieldStar
       (FieldStar y, g) = backprop innerKnot (FieldStar 4.0)
       gElim = eliminateKnots (FieldStar 0) g
       FieldStar gLazy = evalPullback g (FieldStar 1.0)

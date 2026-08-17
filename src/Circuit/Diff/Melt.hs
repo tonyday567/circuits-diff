@@ -12,12 +12,14 @@
 -- contains only 'Lift', 'Compose', 'Swap', 'Par' and 'Knot' constructors.
 -- After melting, 'Circuit.Diff.Eliminate.eliminateKnots' can remove the knots
 -- in closed form.
+{-# LANGUAGE TypeApplications #-}
+
 module Circuit.Diff.Melt
   ( melt,
   )
 where
 
-import Circuit.Dagger (Copy (..), Discard (..), Merge (..), Zero (..))
+import Circuit.Dagger (CopyT (..), DiscardT (..), MergeT (..), ZeroT (..))
 import Circuit.Diff.Pullback (Pullback (..))
 import Circuit.Net (Net (..))
 import Prelude hiding (id, (.))
@@ -27,14 +29,14 @@ import Prelude hiding (id, (.))
 -- The 'Bimonoid' constraints carried by 'Copy', 'Discard', 'Plus' and 'Zero'
 -- guarantee that the corresponding 'Comonoid' / 'Monoid' methods exist for
 -- 'Pullback', so melting needs no forward execution.
-melt :: Net (,) Pullback a b -> Net (,) Pullback a b
+melt :: Net (,) (,) Pullback a b -> Net (,) (,) Pullback a b
 melt = \case
   Lift p -> Lift p
   Compose g f -> Compose (melt g) (melt f)
   Par f g -> Par (melt f) (melt g)
   Swap -> Swap
   Knot f -> Knot (melt f)
-  Copy -> Lift copy
-  Discard -> Lift discard
-  Plus -> Lift plus
-  Zero -> Lift zero
+  Copy -> Lift copyT
+  Discard -> Lift (discardT @(,))
+  Plus -> Lift plusT
+  Zero -> Lift (zeroT @(,))

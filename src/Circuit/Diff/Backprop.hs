@@ -2,11 +2,12 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Pointwise linearization and backpropagation for 'Diff'' nets.
 --
--- 'backprop' runs a 'Net (,) Diff' forward at a primal point and builds the
+-- 'backprop' runs a 'Net (,) (,) Diff' forward at a primal point and builds the
 -- transposed net of pointwise pullbacks.  This is the honest reverse-mode
 -- gradient net: the graph's structure is burned down into a straight linear
 -- (affine) cotangent map.
@@ -22,7 +23,7 @@ module Circuit.Diff.Backprop
   )
 where
 
-import Circuit.Dagger (Copy (..), Discard (..), Merge (..), Zero (..))
+import Circuit.Dagger (CopyT (..), DiscardT (..), MergeT (..), ZeroT (..))
 import Circuit.Diff (Diff', runDiff, pattern Diff)
 import Circuit.Diff.Circuit ()
 import Circuit.Diff.Pullback (Pullback (..))
@@ -72,7 +73,7 @@ import Prelude hiding (id, (.))
 -- landing where it can actually be lawful.
 --
 -- >>> let sq = Diff (\x -> (x * x, \d -> 2 * x * d))
--- >>> let n = Compose (Lift (CD.plus :: Diff (Double, Double) Double)) (Compose (Par (Lift sq) (Lift sq)) Copy) :: Net (,) Diff Double Double
+-- >>> let n = Compose (Lift (CD.plus :: Diff (Double, Double) Double)) (Compose (Par (Lift sq) (Lift sq)) Copy) :: Net (,) (,) Diff Double Double
 -- >>> let (y, g) = backprop n 3.0
 -- >>> y
 -- 18.0
@@ -80,9 +81,9 @@ import Prelude hiding (id, (.))
 -- 12.0
 backprop ::
   forall p a b.
-  Net (,) (Diff' p) a b ->
+  Net (,) (,) (Diff' p) a b ->
   a ->
-  (b, Net (,) Pullback b a)
+  (b, Net (,) (,) Pullback b a)
 backprop = linearizeAt
 
 -- | Capture the pullback of a 'Diff' primitive at a primal point.
@@ -100,9 +101,9 @@ fromDiffAt (Diff f) a = Pullback (snd (f a))
 -- 'Trace's inside 'Par' arms survive as 'Trace's in the pullback net.
 linearizeAt ::
   forall p a b.
-  Net (,) (Diff' p) a b ->
+  Net (,) (,) (Diff' p) a b ->
   a ->
-  (b, Net (,) Pullback b a)
+  (b, Net (,) (,) Pullback b a)
 linearizeAt = linearizeNet
 
 -- | Pointwise linearization over the free 'Net' language.
@@ -115,9 +116,9 @@ linearizeAt = linearizeNet
 -- under 'Par' remain visible to future star-elimination passes.
 linearizeNet ::
   forall p a b.
-  Net (,) (Diff' p) a b ->
+  Net (,) (,) (Diff' p) a b ->
   a ->
-  (b, Net (,) Pullback b a)
+  (b, Net (,) (,) Pullback b a)
 linearizeNet n a = case n of
   Lift d ->
     let (b, pb) = runDiff d a
@@ -135,16 +136,16 @@ linearizeNet n a = case n of
     let (x, y) = a
      in ((y, x), Swap)
   Copy ->
-    let (out, pb) = runDiff (copy :: Diff' p a (a, a)) a
+    let (out, pb) = runDiff (copyT :: Diff' p a (a, a)) a
      in (out, Lift (Pullback pb))
   Discard ->
-    let (out, pb) = runDiff (discard :: Diff' p a ()) a
+    let (out, pb) = runDiff (discardT @(,) :: Diff' p a ()) a
      in (out, Lift (Pullback pb))
   Plus ->
-    let (out, pb) = runDiff (plus :: Diff' p (b, b) b) a
+    let (out, pb) = runDiff (plusT :: Diff' p (b, b) b) a
      in (out, Lift (Pullback pb))
   Zero ->
-    let (out, pb) = runDiff (zero :: Diff' p () b) ()
+    let (out, pb) = runDiff (zeroT @(,) :: Diff' p () b) ()
      in (out, Lift (Pullback pb))
   Knot f ->
     let ~((x, b), f') = linearizeNet f (x, a)
@@ -158,7 +159,7 @@ linearizeCircuit ::
   forall p a b.
   C.Loop (,) (Diff' p) a b ->
   a ->
-  (b, Net (,) Pullback b a)
+  (b, Net (,) (,) Pullback b a)
 linearizeCircuit (C.Lift (Diff f)) a =
   let (b, pb) = f a
    in (b, Lift (Pullback pb))
