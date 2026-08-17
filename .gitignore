@@ -8,3 +8,4 @@ dist/
 .stack-work/
 cabal.project.local
 cabal.project.local~
+/cabal.project.local*

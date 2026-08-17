@@ -51,24 +51,25 @@ library
     harpie >=0.3 && <0.4,
     numhask >=0.14 && <0.15,
     transformers >=0.5 && <0.7,
+
   exposed-modules:
-    Circuit.Diff,
-    Circuit.Diff.Backprop,
-    Circuit.Diff.Chart,
-    Circuit.Diff.Circuit,
-    Circuit.Diff.Curvature,
-    Circuit.Diff.Curvature.Surface,
-    Circuit.Diff.Daisyworld,
-    Circuit.Diff.DubinsChase,
-    Circuit.Diff.Eliminate,
-    Circuit.Diff.Inverse,
-    Circuit.Diff.Jet,
-    Circuit.Diff.Melt,
-    Circuit.Diff.Metric,
-    Circuit.Diff.Param,
-    Circuit.Diff.Pullback,
-    Circuit.Diff.RDC,
-    Circuit.Diff.Star,
+    Circuit.Diff
+    Circuit.Diff.Backprop
+    Circuit.Diff.Chart
+    Circuit.Diff.Circuit
+    Circuit.Diff.Curvature
+    Circuit.Diff.Curvature.Surface
+    Circuit.Diff.Daisyworld
+    Circuit.Diff.DubinsChase
+    Circuit.Diff.Eliminate
+    Circuit.Diff.Inverse
+    Circuit.Diff.Jet
+    Circuit.Diff.Melt
+    Circuit.Diff.Metric
+    Circuit.Diff.Param
+    Circuit.Diff.Pullback
+    Circuit.Diff.RDC
+    Circuit.Diff.Star
 
 executable circuits-diff-axioma
   import: ghc-options-stanza
@@ -84,10 +85,12 @@ executable circuits-diff-axioma
     MetricAdjoint
     StarEliminate
     Tags
+
   build-depends:
     base >=4.18 && <5,
     circuits,
     circuits-diff,
     circuits-mat,
     numhask >=0.14 && <0.15,
+
   default-language: GHC2024
