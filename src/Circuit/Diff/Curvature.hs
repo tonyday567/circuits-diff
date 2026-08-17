@@ -30,11 +30,11 @@ module Circuit.Diff.Curvature
   )
 where
 
+import Circuit.Diff (Diff, runDiff, pattern Diff)
 import Circuit.Diff.Chart
   ( christoffel2D,
     raise2D,
   )
-import Circuit.Diff (Diff, runDiff, pattern Diff)
 import NumHask.Prelude
 import Prelude ()
 
@@ -66,6 +66,7 @@ gamma2DAt = christoffel2D
 -- | Central difference step for ∂Γ.
 fdStep :: (Field a, FromInteger a) => a
 fdStep = one / fromInteger (10000000 :: Integer)
+
 -- | Basis step along coordinate @i@.
 bump2 :: (Additive a, Multiplicative a) => Int -> a -> (a, a) -> (a, a)
 bump2 0 h (x0, x1) = (x0 + h, x1)
@@ -110,8 +111,10 @@ riemann2D lower raise x rho sigma mu nu =
       dNu = partialGamma2D lower raise x nu rho mu sigma
       quad =
         sum
-          [ gammaComp g rho mu lam * gammaComp g lam nu sigma
-              - gammaComp g rho nu lam * gammaComp g lam mu sigma
+          [ gammaComp g rho mu lam
+              * gammaComp g lam nu sigma
+              - gammaComp g rho nu lam
+              * gammaComp g lam mu sigma
           | lam <- [0, 1]
           ]
    in dMu - dNu + quad
@@ -274,8 +277,10 @@ riemannDiagonal m x rho sigma mu nu =
       dNu = partialGammaDiagonal m x nu rho mu sigma
       quad =
         sum
-          [ gammaDiagonal m x rho mu lam * gammaDiagonal m x lam nu sigma
-              - gammaDiagonal m x rho nu lam * gammaDiagonal m x lam mu sigma
+          [ gammaDiagonal m x rho mu lam
+              * gammaDiagonal m x lam nu sigma
+              - gammaDiagonal m x rho nu lam
+              * gammaDiagonal m x lam mu sigma
           | lam <- [0 .. n - 1]
           ]
    in dMu - dNu + quad

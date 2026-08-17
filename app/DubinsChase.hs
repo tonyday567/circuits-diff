@@ -5,8 +5,8 @@ module DubinsChase
   )
 where
 
-import Circuit.Diff.DubinsChase
 import Circuit.Diff (runDiff)
+import Circuit.Diff.DubinsChase
 import System.Exit (exitFailure)
 import Text.Printf (printf)
 

@@ -39,6 +39,7 @@ common ghc-options-stanza
     -Wpartial-fields
     -Wredundant-constraints
     -Wno-orphans
+    -Wno-pattern-namespace-specifier
 
 library
   import: ghc-options-stanza

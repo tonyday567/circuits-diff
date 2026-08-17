@@ -1,4 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
 
 -- | Jets via truncated Taylor series.
@@ -37,11 +36,11 @@ module Circuit.Diff.Jet
   )
 where
 
+import Circuit.Diff (Diff', runDiff)
 import NumHask.Algebra.Additive (Additive (..), Subtractive (..), sum)
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..))
 import NumHask.Data.Integral (FromInteger (..))
-import Circuit.Diff (Diff', runDiff)
 import Prelude hiding (acos, asin, atan, atan2, cos, exp, fromInteger, log, negate, pi, recip, sin, sqrt, sum, (*), (+), (-), (/))
 import Prelude qualified as P
 

@@ -34,7 +34,7 @@ import Circuit.Category (Category (..), Discrete (..), ObDict (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
 import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 import Circuit.Dagger qualified as CD
-import Circuit.Diff (Diff, Diff', pattern Diff, runDiff)
+import Circuit.Diff (Diff, Diff', runDiff, pattern Diff)
 import Circuit.Tensor (Action (..), Tensor (..))
 import Data.Bifunctor
 import NumHask.Algebra.Additive qualified as NHA

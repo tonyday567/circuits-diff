@@ -1,7 +1,5 @@
 {-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE TupleSections #-}
 
 -- | Kepler's equation as a fixed-point knot.
 --
@@ -18,7 +16,7 @@ module Kepler
   )
 where
 
-import Circuit.Diff.Circuit (Diff, Diff', data Diff, runDiff, traceNFrom)
+import Circuit.Diff.Circuit (Diff, Diff', runDiff, traceNFrom, pattern Diff)
 import Circuit.Diff.Star (traceStarFromD)
 import NumHask.Prelude
 import Prelude ()

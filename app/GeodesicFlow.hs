@@ -1,4 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
 
 -- | Geodesic flow on the polar chart as an ODE spike.

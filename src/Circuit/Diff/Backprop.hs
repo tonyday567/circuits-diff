@@ -2,8 +2,6 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Pointwise linearization and backpropagation for 'Diff'' nets.
@@ -25,7 +23,7 @@ module Circuit.Diff.Backprop
 where
 
 import Circuit.Dagger (Copy (..), Discard (..), Merge (..), Zero (..))
-import Circuit.Diff (Diff', data Diff, runDiff)
+import Circuit.Diff (Diff', runDiff, pattern Diff)
 import Circuit.Diff.Circuit ()
 import Circuit.Diff.Pullback (Pullback (..))
 import Circuit.Loop qualified as C

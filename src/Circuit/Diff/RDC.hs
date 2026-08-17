@@ -1,7 +1,6 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE TupleSections #-}
 
 -- | Cartesian reverse differential category structure on 'Diff''.
 --
@@ -45,14 +44,14 @@ module Circuit.Diff.RDC
   )
 where
 
+import Circuit.Diff (Diff', runDiff, pattern Diff)
+import Circuit.Diff.Jet (constant, taylor)
 import Control.Category
 import NumHask.Algebra.Additive (Additive (..))
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Multiplicative (..))
 import NumHask.Data.Integral (FromInteger (..))
-import Circuit.Diff (Diff', data Diff, runDiff)
-import Circuit.Diff.Jet (constant, taylor)
-import Prelude hiding (fromInteger, id, (*), (.), (+))
+import Prelude hiding (fromInteger, id, (*), (+), (.))
 import Prelude qualified as P
 
 -- | Reverse derivative combinator.
@@ -118,7 +117,8 @@ rdcAdditive ::
   b ->
   Bool
 rdcAdditive tol f g a db1 db2 =
-  near tol
+  near
+    tol
     (rdc (f + g) (a, db1 + db2))
     (rdc f (a, db1 + db2) + rdc g (a, db1 + db2))
     && near tol (rdc zero (a, db1)) zero
@@ -136,7 +136,8 @@ rdcLinear ::
   b ->
   Bool
 rdcLinear tol f a db1 db2 db3 =
-  near tol
+  near
+    tol
     (rdc f (a, db1 + db2 + db3))
     (rdc f (a, db1) + rdc f (a, db2) + rdc f (a, db3))
     && near tol (rdc f (a, zero)) zero

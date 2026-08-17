@@ -92,11 +92,11 @@ module Circuit.Diff.DubinsChase
   )
 where
 
+import Circuit.Diff (Diff', runDiff, pattern Diff)
 import Circuit.Diff.Param (DiffP (..), toParam)
 import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Field qualified as NHF
 import NumHask.Algebra.Multiplicative qualified as NHM
-import Circuit.Diff (Diff', runDiff, pattern Diff)
 import Prelude
 
 -- | Game parameters (SI-ish units; scale free for toy oracles).
@@ -298,7 +298,7 @@ pursuerPath = map (\((x, y, _), _) -> (x, y))
 
 -- | Evader samples along a rollout.
 evaderPath :: [World] -> [Pos2]
-evaderPath = map (\(_, e) -> e)
+evaderPath = map snd
 
 ----------------------------------------------------------------------
 -- Deck 1 — soft capture + FD through rollout
@@ -481,8 +481,7 @@ minDistancePath ws =
 everCaptured :: Params -> [World] -> Bool
 everCaptured p =
   any
-    ( \((xp, yp, _), e) -> captured p (xp, yp) e
-    )
+    (\((xp, yp, _), e) -> captured p (xp, yp) e)
 
 -- | First time (step index × dt) at which hard capture holds; 'Nothing' if never.
 captureTime :: Params -> Double -> [World] -> Maybe Double
@@ -535,13 +534,12 @@ optimizeU p cfg us0 phis w0 =
           gNorm = sqrt (sum (map (\gi -> gi * gi) g))
        in if gNorm < 1e-12
             then (us, reverse hist)
-            else
-              case backtrack (ocEta0 cfg) us g lPrev of
-                Nothing -> (us, reverse hist)
-                Just (us', l') ->
-                  if abs (lPrev - l') < ocTol cfg * (1 + abs lPrev)
-                    then (us', reverse (l' : hist))
-                    else go (k - 1) us' (l' : hist)
+            else case backtrack (ocEta0 cfg) us g lPrev of
+              Nothing -> (us, reverse hist)
+              Just (us', l') ->
+                if abs (lPrev - l') < ocTol cfg * (1 + abs lPrev)
+                  then (us', reverse (l' : hist))
+                  else go (k - 1) us' (l' : hist)
     go _ us hist = (us, reverse hist)
 
     backtrack eta us g lPrev

@@ -23,13 +23,13 @@ module MetricAdjoint
   )
 where
 
-import Circuit.Diff.Circuit (Diff, data Diff, runDiff)
 import Circuit.Diff.Chart
   ( christoffel2D,
     covariantDerivative,
     polarMetricLower,
     polarMetricRaise,
   )
+import Circuit.Diff.Circuit (Diff, runDiff, pattern Diff)
 import Circuit.Diff.Metric (adjointWith)
 import NumHask.Prelude
 import Prelude ()

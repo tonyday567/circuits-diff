@@ -1,5 +1,4 @@
 {-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE PatternSynonyms #-}
 
 -- | Tests for star-elimination of '(,)' knots in linear pullback nets.
 module StarEliminate
@@ -8,7 +7,7 @@ module StarEliminate
 where
 
 import Circuit.Diff.Backprop (backprop)
-import Circuit.Diff.Circuit (Diff, Diff', data Diff)
+import Circuit.Diff.Circuit (Diff, Diff', pattern Diff)
 import Circuit.Diff.Eliminate (eliminateKnots)
 import Circuit.Diff.Pullback (Pullback (..), evalPullback)
 import Circuit.Net (Net (..))

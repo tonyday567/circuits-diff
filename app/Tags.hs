@@ -1,5 +1,4 @@
 {-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
 
 -- | Tests for phantom-tag separation on 'Diff''.
@@ -8,7 +7,7 @@ module Tags
   )
 where
 
-import Circuit.Diff.Circuit (Diff, Diff', data Diff, runDiff)
+import Circuit.Diff.Circuit (Diff, Diff', runDiff, pattern Diff)
 import NumHask.Prelude
 import Prelude ()
 

@@ -29,8 +29,8 @@ import Circuit.Category (Category (..), Discrete (..), ObDict (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
 import Circuit.Dagger (Copy (..), Discard (..), Merge (..), Zero (..))
 import Circuit.Layer (run)
-import Circuit.Tensor (Action (..), Tensor (..))
 import Circuit.Net (Net)
+import Circuit.Tensor (Action (..), Tensor (..))
 import Data.Bifunctor
 import Prelude hiding (id, (.))
 

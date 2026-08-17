@@ -19,9 +19,9 @@ module Circuit.Diff.Inverse
   )
 where
 
+import Circuit.Diff (Diff', runDiff, pattern Diff)
 import NumHask.Algebra.Additive (Additive (..), Subtractive (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..))
-import Circuit.Diff (Diff', data Diff, runDiff)
 import Prelude hiding (negate, recip, (*), (+), (-), (/))
 import Prelude qualified as P
 

@@ -17,8 +17,8 @@ module Circuit.Diff.Melt
   )
 where
 
-import Circuit.Diff.Pullback (Pullback (..))
 import Circuit.Dagger (Copy (..), Discard (..), Merge (..), Zero (..))
+import Circuit.Diff.Pullback (Pullback (..))
 import Circuit.Net (Net (..))
 import Prelude hiding (id, (.))
 

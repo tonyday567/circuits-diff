@@ -27,11 +27,11 @@ module Circuit.Diff.Eliminate
   )
 where
 
-import Circuit.Mat.Dense (Matrix (..), fromLists, matVec, starMatrix, toLists)
+import Circuit.Dagger qualified
 import Circuit.Diff.Melt (melt)
 import Circuit.Diff.Pullback (Pullback (..))
-import Circuit.Dagger qualified
 import Circuit.Layer (run)
+import Circuit.Mat.Dense (Matrix (..), fromLists, matVec, starMatrix, toLists)
 import Circuit.Net (Net (..))
 import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Multiplicative qualified as NHM

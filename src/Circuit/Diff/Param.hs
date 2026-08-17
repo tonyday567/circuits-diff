@@ -43,9 +43,9 @@ import Circuit.Category (Category (..), Discrete (..), ObDict (..))
 import Circuit.Channel (Channel (..))
 import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 import Circuit.Dagger qualified as CD
+import Circuit.Diff (Diff', runDiff, pattern Diff)
 import Circuit.Tensor (Action (..), Tensor (..))
 import Data.Bifunctor
-import Circuit.Diff (Diff', runDiff, pattern Diff)
 import Prelude hiding (id, (.))
 
 -- $setup

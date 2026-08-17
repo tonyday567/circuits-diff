@@ -10,11 +10,11 @@ module Circuit.Diff.Curvature.Surface
   )
 where
 
+import Circuit.Diff.Jet (Jet, taylor)
 import NumHask.Algebra.Additive (Additive (..), Subtractive (..))
 import NumHask.Algebra.Field (ExpField (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..))
 import NumHask.Data.Integral (FromInteger (..))
-import Circuit.Diff.Jet (Jet, taylor)
 import Prelude hiding (fromInteger, negate, recip, sqrt, (*), (+), (-), (/))
 import Prelude qualified as P
 

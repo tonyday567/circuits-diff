@@ -5,12 +5,12 @@ module Main (main) where
 
 import Circuit (Loop, run)
 import Circuit qualified
-import Circuit.Diff.Circuit (Diff, data Diff, runDiff, traceNFrom)
-import Circuit.Diff.Backprop (backprop)
-import Circuit.Diff.Pullback (evalPullback)
-import Circuit.Tensor (Action (..))
-import Circuit.Net (Net (..))
 import Circuit.Channel (Traced (..))
+import Circuit.Diff.Backprop (backprop)
+import Circuit.Diff.Circuit (Diff, runDiff, traceNFrom, pattern Diff)
+import Circuit.Diff.Pullback (evalPullback)
+import Circuit.Net (Net (..))
+import Circuit.Tensor (Action (..))
 import Curvature (runCurvatureTests)
 import DiffCarrierTests (runDiffCarrierTests)
 import DubinsChase (runDubinsChase)

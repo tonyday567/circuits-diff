@@ -1,6 +1,5 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE TupleSections #-}
 
 -- | Charts interpreted as differentiable maps and the geometry they induce.
 --
