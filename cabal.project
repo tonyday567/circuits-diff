@@ -1,9 +1,3 @@
-packages:
-  circuits-diff.cabal
-  ../numhask/numhask.cabal
-  ../circuits/circuits.cabal
-  ../circuits-mat/circuits-mat.cabal
-  ../harpie/harpie.cabal
-  ../../machina/circuits-diff-machina/circuits-diff-machina.cabal
+packages: circuits-diff.cabal
 
 write-ghc-environment-files: always
