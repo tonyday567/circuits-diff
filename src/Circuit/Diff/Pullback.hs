@@ -25,7 +25,7 @@ module Circuit.Diff.Pullback
   )
 where
 
-import Circuit.Category (Category (..), Discrete (..), ObDict (..))
+import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
 import Circuit.Dagger (Copy (..), Discard (..), Merge (..), Zero (..))
 import Circuit.Layer (run)
@@ -58,10 +58,6 @@ instance Category Pullback where
   Pullback g . Pullback f = Pullback (\x -> g (f x))
   {-# INLINE id #-}
   {-# INLINE (.) #-}
-
--- | Unconstrained objects — every type is an object of 'Pullback'.
-instance Discrete Pullback where
-  withOb x = x
 
 -- | Parallel composition pairs pullbacks independently; 'swap' swaps
 -- the two cotangents.

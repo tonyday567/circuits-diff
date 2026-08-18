@@ -39,7 +39,7 @@ module Circuit.Diff.Param
   )
 where
 
-import Circuit.Category (Category (..), Discrete (..), ObDict (..))
+import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..))
 import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 import Circuit.Dagger qualified as CD
@@ -134,10 +134,6 @@ instance (MergeZero (->) p) => Category (DiffP p) where
              in (da, CD.plus (dpF, dpG))
         )
   {-# INLINE (.) #-}
-
--- | Unconstrained objects — 'DiffP' carries no 'Ob' restriction.
-instance (MergeZero (->) p) => Discrete (DiffP p) where
-  withOb x = x
 
 ----------------------------------------------------------------------
 -- Monoidal structure on objects

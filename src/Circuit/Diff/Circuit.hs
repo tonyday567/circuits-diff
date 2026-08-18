@@ -30,7 +30,7 @@ module Circuit.Diff.Circuit
   )
 where
 
-import Circuit.Category (Category (..), Discrete (..), ObDict (..))
+import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
 import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 import Circuit.Dagger qualified as CD
@@ -59,10 +59,6 @@ instance Category (Diff' p) where
      in (c, \dc -> gb (fc dc))
   {-# INLINE id #-}
   {-# INLINE (.) #-}
-
--- | Unconstrained objects — every type is an object of 'Diff''.
-instance Discrete (Diff' p) where
-  withOb x = x
 
 -- | 'Trace' for 'Diff' with the @(,)@ tensor.
 --
