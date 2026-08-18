@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeApplications #-}
+
 -- | Pure structural melting for 'Net Pullback'.
 --
 -- 'Circuit.Net.melt' melts bimonoid rows ('Copy', 'Discard', 'Plus',
@@ -12,8 +14,6 @@
 -- contains only 'Lift', 'Compose', 'Swap', 'Par' and 'Knot' constructors.
 -- After melting, 'Circuit.Diff.Eliminate.eliminateKnots' can remove the knots
 -- in closed form.
-{-# LANGUAGE TypeApplications #-}
-
 module Circuit.Diff.Melt
   ( melt,
   )

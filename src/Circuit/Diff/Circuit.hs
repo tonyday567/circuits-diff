@@ -104,8 +104,6 @@ instance Channel (,) (Diff' p) where
   assoc = Diff (\((s, s'), x) -> ((s, (s', x)), \(s'', (s''', x')) -> ((s'', s'''), x')))
   assoc' = Diff (\(s, (s', x)) -> (((s, s'), x), \((s'', s'''), x') -> (s'', (s''', x'))))
   slide = Diff (\(s, (s', x)) -> ((s', (s, x)), \(s'', (s''', x')) -> (s''', (s'', x'))))
-  withTensorOb ObDict ObDict x = x
-  {-# INLINE withTensorOb #-}
 
 -- | Cocartesian channel plumbing for 'Diff'.
 instance Channel Either (Diff' p) where
@@ -130,8 +128,6 @@ instance Channel Either (Diff' p) where
           Right (Left b) -> (Left b, \case Left db -> Right (Left db); _ -> error "slide")
           Right (Right c) -> (Right (Right c), \case Right (Right dc) -> Right (Right dc); _ -> error "slide")
       )
-  withTensorOb ObDict ObDict x = x
-  {-# INLINE withTensorOb #-}
 
 -- | Cartesian tensorial strength for 'Diff'.
 instance Strength (,) (Diff' p) where
@@ -139,8 +135,6 @@ instance Strength (,) (Diff' p) where
     let (c, back) = f b
      in ((a, c), \(da, dc) -> (da, back dc))
   {-# INLINE strength #-}
-  withStrengthOb ObDict ObDict ObDict x = x
-  {-# INLINE withStrengthOb #-}
 
 -- | Cocartesian tensorial strength for 'Diff'.
 instance Strength Either (Diff' p) where
@@ -150,8 +144,6 @@ instance Strength Either (Diff' p) where
       let (c, back) = f b
        in (Right c, \case Right dc -> Right (back dc); Left _ -> error "strength: Right input, Left cotangent")
   {-# INLINE strength #-}
-  withStrengthOb ObDict ObDict ObDict x = x
-  {-# INLINE withStrengthOb #-}
 
 -- | Trace for 'Diff' with the 'Either' tensor.
 --

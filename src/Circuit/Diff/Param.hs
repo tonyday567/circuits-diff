@@ -158,9 +158,6 @@ instance (MergeZero (->) p) => Channel (,) (DiffP p) where
   slide = DiffP $ \_ (a, (b, c)) -> ((b, (a, c)), \(db, (da, dc)) -> ((da, (db, dc)), CD.zero ()))
   {-# INLINE slide #-}
 
-  withTensorOb ObDict ObDict x = x
-  {-# INLINE withTensorOb #-}
-
 ----------------------------------------------------------------------
 -- Monoidal product of morphisms
 ----------------------------------------------------------------------
