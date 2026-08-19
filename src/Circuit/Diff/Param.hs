@@ -45,7 +45,6 @@ import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..)
 import Circuit.Dagger qualified as CD
 import Circuit.Diff (Diff', runDiff, pattern Diff)
 import Circuit.Tensor (Action (..), Tensor (..))
-import Data.Bifunctor
 import Prelude hiding (id, (.))
 
 -- $setup
@@ -236,7 +235,7 @@ instance (Zero (->) a, Zero (->) p) => Zero (DiffP p) a where
 --
 --   forward:  y = x + op(x)
 --   backward: dx = dy + dOp
-residual :: (Num a, MergeZero (->) p) => DiffP p a a -> DiffP p a a
+residual :: (Num a) => DiffP p a a -> DiffP p a a
 residual op = DiffP $ \p a ->
   let (b, opBack) = runDiffP op p a
    in ( a + b,

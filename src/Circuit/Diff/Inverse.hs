@@ -27,7 +27,7 @@ import Prelude qualified as P
 
 -- | The identity differentiable function @x ↦ x@.
 varDiff :: Diff' p a a
-varDiff = Diff (\s -> (s, \db -> db))
+varDiff = Diff (\s -> (s, id))
 
 -- | Constant differentiable function.
 constDiff :: (Additive a) => b -> Diff' p a b

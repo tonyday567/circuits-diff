@@ -6,6 +6,3 @@ dist/
 *.dyn_hi
 *.dyn_o
 .stack-work/
-cabal.project.local
-cabal.project.local~
-/cabal.project.local*

@@ -26,19 +26,8 @@ import Circuit.Diff.Curvature
 import NumHask.Prelude
 import Prelude ()
 
-near :: Double -> Double -> Bool
-near x y = abs (x - y) < 1.0e-5
-
 nearLoose :: Double -> Double -> Bool
 nearLoose x y = abs (x - y) < 1.0e-4
-
-assert :: String -> Double -> Double -> IO ()
-assert name got expected =
-  if near got expected
-    then putStrLn $ "  PASS " ++ name ++ ": " ++ show got
-    else do
-      putStrLn $ "  FAIL " ++ name ++ ": got " ++ show got ++ ", expected " ++ show expected
-      error "curvature test failed"
 
 assertLoose :: String -> Double -> Double -> IO ()
 assertLoose name got expected =

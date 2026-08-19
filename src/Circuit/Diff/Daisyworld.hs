@@ -175,7 +175,7 @@ kGrowth = 1 / (17.5 * 17.5)
 -- | Planetary albedo \(A = \alpha_b A_b + \alpha_w A_w + x A_g\),
 -- with bare fraction \(x = 1 - \alpha_b - \alpha_w\).
 planetaryAlbedo ::
-  (Lit a, NHA.Additive a, NHA.Subtractive a, NHM.Multiplicative a) =>
+  (Lit a, NHA.Subtractive a, NHM.Multiplicative a) =>
   a ->
   a ->
   a
@@ -188,13 +188,7 @@ planetaryAlbedo ab aw =
 -- | Effective temperature from Stefan–Boltzmann:
 -- \(\sigma T_e^4 = S\cdot L\cdot(1-A)\).
 effectiveTemp ::
-  ( Lit a,
-    NHF.ExpField a,
-    NHA.Additive a,
-    NHA.Subtractive a,
-    NHM.Multiplicative a,
-    NHM.Divisive a
-  ) =>
+  (Lit a, NHF.ExpField a) =>
   a -> -- L
   a -> -- A
   a
@@ -204,7 +198,7 @@ effectiveTemp l a =
 
 -- | Local temperature of a daisy type: \(T_i = q(A - A_i) + T_e\).
 localTemp ::
-  (Lit a, NHA.Additive a, NHA.Subtractive a, NHM.Multiplicative a) =>
+  (Lit a, NHA.Subtractive a, NHM.Multiplicative a) =>
   a -> -- planetary A
   a -> -- type albedo A_i
   a -> -- T_e
@@ -214,7 +208,7 @@ localTemp a ai te = lit qInsul NHM.* (a NHA.- ai) NHA.+ te
 -- | Growth parabola \(\beta(T) = 1 - k(T_{\mathrm{opt}} - T)^2\)
 -- (unclamped; at interior equilibria \(\beta > 0\)).
 betaRaw ::
-  (Lit a, NHA.Additive a, NHA.Subtractive a, NHM.Multiplicative a) =>
+  (Lit a, NHA.Subtractive a, NHM.Multiplicative a) =>
   a ->
   a
 betaRaw t =
@@ -233,13 +227,7 @@ betaRaw t =
 -- @'Diff'' p 'Double' 'Double'@ (via 'Lit') to obtain \(\partial f/\partial\alpha\)
 -- and \(\partial f/\partial L\) by reverse mode — the Jacobians the IFT needs.
 daisyRHS ::
-  ( Lit a,
-    NHF.ExpField a,
-    NHA.Additive a,
-    NHA.Subtractive a,
-    NHM.Multiplicative a,
-    NHM.Divisive a
-  ) =>
+  (Lit a, NHF.ExpField a) =>
   a -> -- luminosity L
   [a] -> -- [α_b, α_w]
   [a] -- [α̇_b, α̇_w]
@@ -256,13 +244,7 @@ daisyRHS _ _ = error "daisyRHS: expected [α_b, α_w]"
 
 -- | Planetary effective temperature from state and luminosity.
 planetTe ::
-  ( Lit a,
-    NHF.ExpField a,
-    NHA.Additive a,
-    NHA.Subtractive a,
-    NHM.Multiplicative a,
-    NHM.Divisive a
-  ) =>
+  (Lit a, NHF.ExpField a) =>
   a ->
   [a] ->
   a
@@ -272,13 +254,7 @@ planetTe _ _ = error "planetTe: expected [α_b, α_w]"
 -- | Bare-planet temperature (no daisies): same Stefan–Boltzmann law at
 -- ground albedo.  The control against which regulation is measured.
 bareTe ::
-  ( Lit a,
-    NHF.ExpField a,
-    NHA.Additive a,
-    NHA.Subtractive a,
-    NHM.Multiplicative a,
-    NHM.Divisive a
-  ) =>
+  (Lit a, NHF.ExpField a) =>
   a ->
   a
 bareTe l = effectiveTemp l (lit aGround)

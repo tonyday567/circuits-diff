@@ -94,7 +94,7 @@ fromDiff f a =
 taylorDers :: (Additive a, Multiplicative a, FromInteger a) => Jet a -> [a]
 taylorDers (Jet cs) = P.zipWith (*) cs factorials
   where
-    factorials = P.scanl (*) one (P.map (one +) (P.map fromInteger [(0 :: P.Integer) ..]))
+    factorials = P.scanl (*) one (P.map ((one +) . fromInteger) [(0 :: P.Integer) ..])
 
 -- | Apply a jet-level function at a point and return the raw
 -- derivatives @[f(a), f'(a), f''(a), ..., f^(n)(a)]@.
@@ -196,8 +196,8 @@ sinCosSeries u0 us =
       go 0 = (sin u0, cos u0)
       go m =
         let m' = fromInteger (P.toInteger m)
-            sSum = sum [fromInteger (P.toInteger (m - j)) * (snd (pairs P.!! j)) * (us P.!! (m - j - 1)) | j <- [0 .. m - 1]]
-            cSum = sum [fromInteger (P.toInteger (m - j)) * (fst (pairs P.!! j)) * (us P.!! (m - j - 1)) | j <- [0 .. m - 1]]
+            sSum = sum [fromInteger (P.toInteger (m - j)) * snd (pairs P.!! j) * (us P.!! (m - j - 1)) | j <- [0 .. m - 1]]
+            cSum = sum [fromInteger (P.toInteger (m - j)) * fst (pairs P.!! j) * (us P.!! (m - j - 1)) | j <- [0 .. m - 1]]
          in ((one / m') * sSum, negate (one / m') * cSum)
       (ss, cs) = P.unzip pairs
    in (Jet ss, Jet cs)

@@ -244,7 +244,7 @@ softLossPathA p ws =
   let n = lit (fromIntegral (length ws) :: Double)
    in if null ws
         then lit 0
-        else foldr (NHA.+) (lit 0) (map (softLossWorldA p) ws) NHM./ n
+        else foldr ((NHA.+) . softLossWorldA p) (lit 0) ws NHM./ n
 
 -- | Polymorphic loss of pursuer controls vs fixed open-loop evader.
 lossOfControlsA ::

@@ -68,7 +68,7 @@ fdStep :: (Field a, FromInteger a) => a
 fdStep = one / fromInteger (10000000 :: Integer)
 
 -- | Basis step along coordinate @i@.
-bump2 :: (Additive a, Multiplicative a) => Int -> a -> (a, a) -> (a, a)
+bump2 :: (Additive a) => Int -> a -> (a, a) -> (a, a)
 bump2 0 h (x0, x1) = (x0 + h, x1)
 bump2 1 h (x0, x1) = (x0, x1 + h)
 bump2 _ _ _ = error "bump2: bad index"
@@ -190,7 +190,7 @@ data DiagonalMetric a = DiagonalMetric
 -- Coordinates @(t, r, θ, φ)@; @rs = 2M@ is the Schwarzschild radius.
 --
 -- > g = diag( −(1−rs/r), 1/(1−rs/r), r², r² sin²θ )
-schwarzschildMetric :: (Field a, TrigField a) => a -> DiagonalMetric a
+schwarzschildMetric :: (TrigField a) => a -> DiagonalMetric a
 schwarzschildMetric rs =
   DiagonalMetric
     { dmDim = 4,

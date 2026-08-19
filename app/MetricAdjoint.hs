@@ -34,10 +34,7 @@ import Circuit.Diff.Metric (adjointWith)
 import NumHask.Prelude
 import Prelude ()
 
--- | Basis vectors in R^2.
-basis0 :: (Double, Double)
-basis0 = (1, 0)
-
+-- | Basis vector e1 in R^2.
 basis1 :: (Double, Double)
 basis1 = (0, 1)
 

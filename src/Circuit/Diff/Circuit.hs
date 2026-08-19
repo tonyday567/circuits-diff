@@ -52,7 +52,7 @@ import Prelude hiding (id, (.))
 -- 'Category' with associated 'Ob' (default @()@) so 'Monoidal' / 'Traced' /
 -- free 'Trace' folds typecheck after kind-gen.
 instance Category (Diff' p) where
-  id = Diff (\a -> (a, \da -> da))
+  id = Diff (\a -> (a, id))
   Diff f . Diff g = Diff $ \a ->
     let (b, gb) = g a
         (c, fc) = f b
@@ -342,13 +342,12 @@ traceStarFrom x0 n (Diff body) = Diff $ \b ->
 --
 -- The lazy 'trace' instance for 'Diff' computes exactly this via a
 -- lazy fixpoint rather than closed form, so this alias is definable
--- without using 'NHR.star' at all — the constraint records the
--- /semantics/, not the implementation.  Note that @numhask@ ships no
+-- without using 'NHR.star' at all.  Note that @numhask@ ships no
 -- 'NHR.StarSemiring' instances, so for concrete carriers prefer
 -- 'traceStarFrom' (scalar channel, closed-form backward) or
 -- @Circuit.Diff.Star.traceStarMatrix@ (vector channel, solved by
 -- 'Circuit.Mat.Dense.starMatrix' — the bridge made literal).
-traceStar :: (NHR.StarSemiring j) => Diff' p (j, b) (j, c) -> Diff' p b c
+traceStar :: Diff' p (j, b) (j, c) -> Diff' p b c
 traceStar = trace
 
 -- | Iterated trace for strict carriers.

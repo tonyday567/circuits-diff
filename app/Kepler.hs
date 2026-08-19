@@ -16,7 +16,7 @@ module Kepler
   )
 where
 
-import Circuit.Diff.Circuit (Diff, Diff', runDiff, traceNFrom, pattern Diff)
+import Circuit.Diff.Circuit (Diff, runDiff, traceNFrom, pattern Diff)
 import Circuit.Diff.Star (traceStarFromD)
 import NumHask.Prelude
 import Prelude ()

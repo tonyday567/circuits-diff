@@ -54,7 +54,7 @@ newtype Pullback b a = Pullback
   }
 
 instance Category Pullback where
-  id = Pullback (\x -> x)
+  id = Pullback id
   Pullback g . Pullback f = Pullback (\x -> g (f x))
   {-# INLINE id #-}
   {-# INLINE (.) #-}

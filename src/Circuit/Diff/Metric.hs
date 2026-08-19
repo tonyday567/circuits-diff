@@ -72,7 +72,7 @@ euclideanMetric = Diff $ \(_, v) -> (v, const (zero, zero))
 -- optimizer) does not back-propagate through the metric coefficients.
 -- If you need Christoffel-style @∂g@, write a custom metric 'Diff'.
 diagonalMetric ::
-  (Additive s, Multiplicative a, Divisive a) =>
+  (Additive s) =>
   -- | @f@ such that @g(s) = diag(f s)@
   (s -> a -> a) ->
   Diff (s, a) a

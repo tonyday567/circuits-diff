@@ -33,10 +33,10 @@ module Circuit.Diff.Star
   )
 where
 
-import Circuit.Dagger (MergeZero (..))
+import Circuit.Dagger (MergeZero)
 import Circuit.Dagger qualified as CD
-import Circuit.Diff.Circuit (Diff, Diff', traceStarFrom, pattern Diff)
-import Circuit.Mat.Dense (Matrix (..), fromLists, matVec, starMatrix)
+import Circuit.Diff.Circuit (Diff', traceStarFrom, pattern Diff)
+import Circuit.Mat.Dense (fromLists, matVec, starMatrix)
 import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Multiplicative qualified as NHM
 import NumHask.Algebra.Ring qualified as NHR

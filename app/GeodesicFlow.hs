@@ -44,12 +44,6 @@ geodesicAcceleration x v =
       a1 = negate (g100 * v0 * v0 + g101 * v0 * v1 + g110 * v1 * v0 + g111 * v1 * v1)
    in (a0, a1)
 
--- | First-order dynamics @(x, v) ↦ (v, a)@.
-geodesicDynamics ::
-  ((Double, Double), (Double, Double)) ->
-  ((Double, Double), (Double, Double))
-geodesicDynamics (x, v) = (v, geodesicAcceleration x v)
-
 -- | One RK4 step for a first-order ODE on tuples.
 rk4Step ::
   Double ->

@@ -10,7 +10,6 @@ import Circuit.Diff.Backprop (backprop)
 import Circuit.Diff.Circuit (Diff, runDiff, traceNFrom, pattern Diff)
 import Circuit.Diff.Pullback (evalPullback)
 import Circuit.Net (Net (..))
-import Circuit.Tensor (Action (..))
 import Curvature (runCurvatureTests)
 import DiffCarrierTests (runDiffCarrierTests)
 import DubinsChase (runDubinsChase)
@@ -114,7 +113,7 @@ main = do
   let innerBody =
         Diff
           ( \(x, b) ->
-              ((0.0, x + 2.0 * b), \(dx, dc) -> (dc, 2.0 * dc))
+              ((0.0, x + 2.0 * b), \(_, dc) -> (dc, 2.0 * dc))
           ) ::
           Diff (Double, Double) (Double, Double)
       innerKnot = Knot (Lift innerBody) :: Net (,) (,) Diff Double Double

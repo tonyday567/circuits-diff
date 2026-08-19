@@ -109,10 +109,10 @@ runDiffCarrierTests = do
     rdcIdentity eps (2.0 :: Double) 1.0
 
   assert "RD.3: rdc of fst projection" $
-    rdcFst eps ((2.0 :: Double), (3.0 :: Double)) 1.0
+    rdcFst eps (2.0 :: Double, 3.0 :: Double) 1.0
 
   assert "RD.3: rdc of snd projection" $
-    rdcSnd eps ((2.0 :: Double), (3.0 :: Double)) 1.0
+    rdcSnd eps (2.0 :: Double, 3.0 :: Double) 1.0
 
   assert "RD.4: rdc of pairing" $
     let f = NHField.exp x
