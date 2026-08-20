@@ -16,12 +16,11 @@ description:
   differential categories, curvature, charts, star-elimination, and
   parameterised differentiable arrows.  Everything lives under the
   'Circuit.Diff' namespace.
-
 build-type: Simple
 tested-with:
+  ghc ==9.10.1
   ghc ==9.12.2
   ghc ==9.14.1
-
 extra-doc-files:
   ChangeLog.md
   readme.md
@@ -33,45 +32,57 @@ source-repository head
 common ghc-options-stanza
   ghc-options:
     -Wall
+    -Wno-unused-imports
     -Wcompat
+    -Widentities
     -Wincomplete-record-updates
     -Wincomplete-uni-patterns
     -Wpartial-fields
     -Wredundant-constraints
-    -Wno-orphans
-    -Wno-pattern-namespace-specifier
+
+  if impl(ghc >=9.14)
+    ghc-options: -Wno-pattern-namespace-specifier
 
 library
   import: ghc-options-stanza
   default-language: GHC2024
   hs-source-dirs: src
-  build-depends:
-    base >=4.20 && <5,
-    circuits >=0.3 && <0.4,
-    circuits-mat >=0.1 && <0.2,
-    numhask >=0.14 && <0.15,
-
   exposed-modules:
     Circuit.Diff
     Circuit.Diff.Backprop
+    Circuit.Diff.Carrier
     Circuit.Diff.Chart
     Circuit.Diff.Circuit
     Circuit.Diff.Curvature
     Circuit.Diff.Curvature.Surface
-    Circuit.Diff.Daisyworld
     Circuit.Diff.DubinsChase
     Circuit.Diff.Eliminate
     Circuit.Diff.Inverse
+    Circuit.Diff.Jacobian
     Circuit.Diff.Jet
     Circuit.Diff.Melt
     Circuit.Diff.Metric
+    Circuit.Diff.Newton
+    Circuit.Diff.Operators
     Circuit.Diff.Param
     Circuit.Diff.Pullback
     Circuit.Diff.RDC
     Circuit.Diff.Star
+    Circuit.Diff.Taylor
+    Circuit.Diff.Thread
+    Circuit.Diff.Expr
+    Circuit.Diff.Tensor
+
+  build-depends:
+    base >=4.20 && <5,
+    circuits >=0.3 && <0.4,
+    circuits-mat >=0.1 && <0.2,
+    harpie >=0.3 && <0.4,
+    numhask >=0.14 && <0.15,
 
 executable circuits-diff-axioma
   import: ghc-options-stanza
+  default-language: GHC2024
   main-is: axioma.hs
   hs-source-dirs: app
   other-modules:
@@ -82,14 +93,14 @@ executable circuits-diff-axioma
     Kepler
     MatrixStar
     MetricAdjoint
+    Operators
     StarEliminate
     Tags
-
+    Tensor
   build-depends:
     base >=4.20 && <5,
     circuits,
     circuits-diff,
     circuits-mat,
+    harpie >=0.3 && <0.4,
     numhask >=0.14 && <0.15,
-
-  default-language: GHC2024

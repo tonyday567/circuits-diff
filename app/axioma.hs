@@ -18,9 +18,11 @@ import Kepler (runKeplerTests)
 import MatrixStar (runMatrixStarTests)
 import MetricAdjoint (runMetricAdjointTests)
 import NumHask.Prelude
+import Operators (runOperatorTests)
 import StarEliminate (runStarEliminateTests)
 import System.Exit (exitFailure)
 import Tags (runTagTests)
+import Tensor (runTensorTests)
 import Prelude ()
 
 near :: Double -> Double -> Bool
@@ -134,3 +136,5 @@ main = do
   runCurvatureTests
   runDiffCarrierTests
   runDubinsChase
+  runOperatorTests
+  runTensorTests

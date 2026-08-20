@@ -1,4 +1,8 @@
 packages:
   circuits-diff.cabal
+  ../circuits/circuits.cabal
+  ../circuits-mat/circuits-mat.cabal
+  ../harpie/harpie.cabal
+  ../numhask/numhask.cabal
 
 write-ghc-environment-files: always
