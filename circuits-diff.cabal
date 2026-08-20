@@ -60,7 +60,6 @@ library
     Circuit.Diff.Inverse
     Circuit.Diff.Jacobian
     Circuit.Diff.Jet
-    Circuit.Diff.Melt
     Circuit.Diff.Metric
     Circuit.Diff.Newton
     Circuit.Diff.Operators
@@ -69,7 +68,6 @@ library
     Circuit.Diff.RDC
     Circuit.Diff.Star
     Circuit.Diff.Taylor
-    Circuit.Diff.Thread
     Circuit.Diff.Expr
     Circuit.Diff.Tensor
 
