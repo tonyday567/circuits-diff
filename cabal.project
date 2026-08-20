@@ -1,6 +1,6 @@
 packages:
   circuits-diff.cabal
-  ../circuits/circuits.cabal
+  ../circuits-evidence-knot/circuits.cabal
   ../circuits-mat/circuits-mat.cabal
   ../harpie/harpie.cabal
   ../numhask/numhask.cabal
