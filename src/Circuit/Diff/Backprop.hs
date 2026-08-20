@@ -25,7 +25,7 @@ import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Diff.Circuit ()
 import Circuit.Diff.Pullback (Pullback (..))
 import Circuit.Loop qualified as C
-import Circuit.Net (Net (..))
+import Circuit.Net (ChannelEvidence (..), Net (..))
 import Prelude hiding (id, (.))
 
 -- $setup
@@ -137,9 +137,9 @@ linearizeNet n a = case n of
   Zero ->
     let (out, pb) = runDiff (zeroT @(,) :: Diff p () b) ()
      in (out, Lift (Pullback pb))
-  Knot f ->
+  Knot ev f ->
     let ~((x, b), f') = linearizeNet f (x, a)
-     in (b, Knot f')
+     in (b, Knot ev f')
 
 -- | Pointwise linearization over the core 'Loop' language.  The
 -- bimonoid rows ('Copy', 'Plus', ...) have already been melted into
@@ -155,4 +155,4 @@ linearizeCircuit (C.Lift (Diff f)) a =
    in (b, Lift (Pullback pb))
 linearizeCircuit (C.Knot f) a =
   let ~((x, b), pb) = runDiff f (x, a)
-   in (b, Knot (Lift (Pullback pb)))
+   in (b, Knot NoEvidence (Lift (Pullback pb)))
