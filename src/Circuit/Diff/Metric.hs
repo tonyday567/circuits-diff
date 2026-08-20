@@ -1,9 +1,8 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
 
 -- | Metric-aware transpose for differentiable arrows.
 --
--- A metric @g@ turns the bare dagger (transpose) of a 'Diff' into the true
+-- A metric @g@ turns the bare dagger (transpose) of a 'Diff into the true
 -- adjoint @g_a^-1 . J^T . g_b@.  The same combinator also supports
 -- optimizer-style preconditioning, where @g@ is a diagonal metric
 -- @diag(sqrt v + eps)@ and only the lowering half is used.
@@ -21,28 +20,28 @@ module Circuit.Diff.Metric
   )
 where
 
-import Circuit.Diff (Diff, runDiff, pattern Diff)
+import Circuit.Diff (Diff (..), Diff', runDiff)
 import NumHask.Prelude
 import Prelude ()
 
 -- | Adjoint of @J : a -> b@ with respect to domain metric @g_a@ and
 -- codomain metric @g_b@.
 --
--- The metrics are themselves 'Diff's of type @Diff (point, vector) vector@:
+-- The metrics are themselves 'Diffs of type @Diff' (point, vector) vector@:
 -- the forward pass lowers or raises a vector at the given point.  The
 -- backward pass of the metric carries @∂g@ in its point-slot; 'adjointWith'
 -- uses only the forward passes.
 adjointWith ::
   -- | @g_a^-1@ — raise a covector on the domain to a vector
-  Diff (a, a) a ->
+  Diff' (a, a) a ->
   -- | @g_b@ — lower a vector on the codomain to a covector
-  Diff (b, b) b ->
+  Diff' (b, b) b ->
   -- | @J : a -> b@
-  Diff a b ->
+  Diff' a b ->
   -- | @J@ with its pullback conjugated to the @g@-adjoint.  The type is
-  -- still @Diff a b@ because the lens stores the forward map @a -> b@ and
+  -- still @Diff' a b@ because the lens stores the forward map @a -> b@ and
   -- the backward map @b -> a@; the adjoint lives in the pullback.
-  Diff a b
+  Diff' a b
 adjointWith raiseA lowerB (Diff f) = Diff $ \x ->
   let (y, jt) = f x
    in ( y,
@@ -54,15 +53,15 @@ adjointWith raiseA lowerB (Diff f) = Diff $ \x ->
       )
 
 -- | Raise a covector using a metric at the given point.
-raiseWith :: Diff (s, a) a -> s -> a -> a
+raiseWith :: Diff' (s, a) a -> s -> a -> a
 raiseWith g s covec = fst (runDiff g (s, covec))
 
 -- | Lower a vector using a metric at the given point.
-lowerWith :: Diff (s, a) a -> s -> a -> a
+lowerWith :: Diff' (s, a) a -> s -> a -> a
 lowerWith g s vec = fst (runDiff g (s, vec))
 
 -- | Euclidean metric @g = δ@: raise and lower are both the identity.
-euclideanMetric :: (Additive a) => Diff (a, a) a
+euclideanMetric :: (Additive a) => Diff' (a, a) a
 euclideanMetric = Diff $ \(_, v) -> (v, const (zero, zero))
 
 -- | Diagonal metric @g(s) = diag(f s)@.
@@ -70,12 +69,12 @@ euclideanMetric = Diff $ \(_, v) -> (v, const (zero, zero))
 -- Lowering maps @x -> f s * x@; raising maps @c -> recip (f s) * c@.
 -- The pullback's state-slot is zero because the typical consumer (an
 -- optimizer) does not back-propagate through the metric coefficients.
--- If you need Christoffel-style @∂g@, write a custom metric 'Diff'.
+-- If you need Christoffel-style @∂g@, write a custom metric 'Diff.
 diagonalMetric ::
   (Additive s) =>
   -- | @f@ such that @g(s) = diag(f s)@
   (s -> a -> a) ->
-  Diff (s, a) a
+  Diff' (s, a) a
 diagonalMetric f = Diff $ \(s, x) ->
   let gx = f s x
    in ( gx,

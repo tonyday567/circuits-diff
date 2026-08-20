@@ -11,9 +11,9 @@
 -- @f :: (ExpField a, TrigField a) => a -> a@ applied to @'variable' n a@
 -- returns the first @n+1@ Taylor coefficients of @f@ at @a@.
 --
--- This is the "iterated" direction of @Diff'@: where @Diff'@ carries one
+-- This is the "iterated" direction of @Diff@: where @Diff@ carries one
 -- pullback, a jet carries the whole truncated tower.  The two interoperate
--- through 'jetFromDiff', which seeds the tower from a first-order pullback.
+-- through 'jetFromDiff, which seeds the tower from a first-order pullback.
 module Circuit.Diff.Jet
   ( -- * Jet type
     Jet (..),
@@ -36,7 +36,7 @@ module Circuit.Diff.Jet
   )
 where
 
-import Circuit.Diff (Diff', runDiff)
+import Circuit.Diff (Diff, runDiff)
 import NumHask.Algebra.Additive (Additive (..), Subtractive (..), sum)
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..))
@@ -79,11 +79,11 @@ variable n a = Jet (a : one : P.replicate (n P.- 1) zero)
 constant :: (Additive a) => Int -> a -> Jet a
 constant n c = Jet (c : P.replicate n zero)
 
--- | Seed a first-order jet from a 'Diff'' first derivative.
+-- | Seed a first-order jet from a 'Diff' first derivative.
 --
--- Higher derivatives are /not/ recovered from a bare 'Diff''; use 'taylor'
+-- Higher derivatives are /not/ recovered from a bare 'Diff'; use 'taylor'
 -- with a NumHask-polymorphic function for automatic higher-order towers.
-fromDiff :: (Multiplicative a) => Diff' p a a -> a -> Jet a
+fromDiff :: (Multiplicative a) => Diff p a a -> a -> Jet a
 fromDiff f a =
   let (y, pb) = runDiff f a
    in Jet [y, pb one]

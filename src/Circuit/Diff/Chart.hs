@@ -1,4 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
 
 -- | Charts interpreted as differentiable maps and the geometry they induce.
@@ -25,7 +24,7 @@ module Circuit.Diff.Chart
   )
 where
 
-import Circuit.Diff (Diff, runDiff, pattern Diff)
+import Circuit.Diff (Diff (..), Diff', runDiff)
 import NumHask.Prelude
 import Prelude ()
 
@@ -36,13 +35,13 @@ dot2 (x1, y1) (x2, y2) = x1 * x2 + y1 * y2
 -- | Pull back the Euclidean metric through a 2-D differentiable chart.
 --
 -- For a chart @φ@ with Jacobian @J@, the induced metric is @g(v) = Jᵀ J v@.
--- The backward pass of the returned 'Diff' is zero because the typical consumer
+-- The backward pass of the returned 'Diff is zero because the typical consumer
 -- (an optimizer or connection computation) does not back-propagate through the
 -- metric coefficients.
 inducedMetric2D ::
   (Additive a, Multiplicative a) =>
-  Diff (a, a) (a, a) ->
-  Diff ((a, a), (a, a)) (a, a)
+  Diff' (a, a) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a)
 inducedMetric2D (Diff f) = Diff $ \(x, v) ->
   let (_, jt) = f x
       jv1 = dot2 v (jt (one, zero))
@@ -50,8 +49,8 @@ inducedMetric2D (Diff f) = Diff $ \(x, v) ->
       gv = jt (jv1, jv2)
    in (gv, const ((zero, zero), (zero, zero)))
 
--- | Invert a 2-D metric 'Diff' to obtain the raising operation @g⁻¹@.
-raise2D :: (Field a) => Diff ((a, a), (a, a)) (a, a) -> Diff ((a, a), (a, a)) (a, a)
+-- | Invert a 2-D metric 'Diff to obtain the raising operation @g⁻¹@.
+raise2D :: (Field a) => Diff' ((a, a), (a, a)) (a, a) -> Diff' ((a, a), (a, a)) (a, a)
 raise2D (Diff lower) = Diff $ \(x, c) ->
   let (col1, _) = lower (x, (one, zero))
       (col2, _) = lower (x, (zero, one))
@@ -68,8 +67,8 @@ raise2D (Diff lower) = Diff $ \(x, c) ->
       v2 = inv10 * fst c + inv11 * snd c
    in ((v1, v2), const ((zero, zero), (zero, zero)))
 
--- | Polar coordinates @(r, θ)@ to cartesian @(x, y)@ as a 'Diff'.
-polarChartDiff :: (TrigField a) => Diff (a, a) (a, a)
+-- | Polar coordinates @(r, θ)@ to cartesian @(x, y)@ as a 'Diff.
+polarChartDiff :: (TrigField a) => Diff' (a, a) (a, a)
 polarChartDiff = Diff $ \(r, theta) ->
   let c = cos theta
       s = sin theta
@@ -79,11 +78,11 @@ polarChartDiff = Diff $ \(r, theta) ->
         \(dx, dy) -> (dx * c + dy * s, r * (dy * c - dx * s))
       )
 
--- | Polar coordinate metric @g = diag(1, r²)@ derived from 'polarChartDiff'.
+-- | Polar coordinate metric @g = diag(1, r²)@ derived from 'polarChartDiff.
 --
 -- The pullback is honest: it carries @∂g@ in the point-slot so that
 -- 'christoffel2D' can recover the Levi-Civita connection.
-polarMetricLower :: (TrigField a) => Diff ((a, a), (a, a)) (a, a)
+polarMetricLower :: (TrigField a) => Diff' ((a, a), (a, a)) (a, a)
 polarMetricLower = Diff $ \((r, _), (vr, vtheta)) ->
   let tw = one + one
    in ( (vr, r * r * vtheta),
@@ -94,7 +93,7 @@ polarMetricLower = Diff $ \((r, _), (vr, vtheta)) ->
       )
 
 -- | Polar coordinate inverse metric @g⁻¹ = diag(1, 1/r²)@.
-polarMetricRaise :: (TrigField a) => Diff ((a, a), (a, a)) (a, a)
+polarMetricRaise :: (TrigField a) => Diff' ((a, a), (a, a)) (a, a)
 polarMetricRaise = raise2D polarMetricLower
 
 -- | Basis vectors in ℝ².
@@ -105,10 +104,10 @@ basis1 :: (Additive a, Multiplicative a) => (a, a)
 basis1 = (zero, one)
 
 -- | Extract the partial derivatives @∂ᵢ gⱼₖ@ of a 2-D metric from its own
--- 'Diff' pullback.
+-- 'Diff pullback.
 partialG ::
   (Additive a, Multiplicative a) =>
-  Diff ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
   (a, a) ->
   (((a, a), (a, a)), ((a, a), (a, a)))
 partialG lower x =
@@ -126,8 +125,8 @@ partialG lower x =
 christoffel2D ::
   forall a.
   (Field a) =>
-  Diff ((a, a), (a, a)) (a, a) ->
-  Diff ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
   (a, a) ->
   (a, a, a, a, a, a, a, a)
 christoffel2D lower raise x =
@@ -168,7 +167,7 @@ christoffel2D lower raise x =
 -- | Directional derivative of a vector field from its 'Diff' pullback.
 directionalDerivative ::
   (Additive a, Multiplicative a) =>
-  Diff (a, a) (a, a) ->
+  Diff' (a, a) (a, a) ->
   (a, a) ->
   (a, a) ->
   (a, a)
@@ -183,9 +182,9 @@ directionalDerivative v x dx =
 -- | Covariant derivative @∇_dx V = ∂_dx V + Γ(x)(dx, V(x))@.
 covariantDerivative ::
   (Field a) =>
-  Diff ((a, a), (a, a)) (a, a) ->
-  Diff ((a, a), (a, a)) (a, a) ->
-  Diff (a, a) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
+  Diff' (a, a) (a, a) ->
   (a, a) ->
   (a, a) ->
   (a, a)

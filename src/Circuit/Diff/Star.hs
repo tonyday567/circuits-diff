@@ -1,8 +1,6 @@
-{-# LANGUAGE PatternSynonyms #-}
-
 -- | The Schur-complement bridge — 'trace' solved by 'starMatrix'.
 --
--- This is where the three floors actually touch.  A 'Diff' knot body
+-- This is where the three floors actually touch.  A 'Diff knot body
 -- has a backward pass that is /affine in cotangents/ (calculus
 -- promises linearity), so its channel self-coupling is a linear map
 -- recoverable by probing with basis cotangents.  Build that map as a
@@ -35,7 +33,7 @@ where
 
 import Circuit.Dagger (MergeZero)
 import Circuit.Dagger qualified as CD
-import Circuit.Diff.Circuit (Diff', traceStarFrom, pattern Diff)
+import Circuit.Diff.Circuit (Diff (..), traceStarFrom)
 import Circuit.Mat.Dense (fromLists, matVec, starMatrix)
 import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Multiplicative qualified as NHM
@@ -64,15 +62,15 @@ import Prelude hiding (id, (.))
 -- shared across cotangents.
 --
 -- __Proof obligation__: probing assumes every primitive's pullback is
--- a genuinely linear map — true for honestly-constructed 'Diff' prims.
+-- a genuinely linear map — true for honestly-constructed 'Diff prims.
 traceStarMatrix ::
   (NHR.StarSemiring j, MergeZero (->) c) =>
   -- | forward seed; its length is the channel dimension
   [j] ->
   -- | forward iteration count
   Int ->
-  Diff' p ([j], b) ([j], c) ->
-  Diff' p b c
+  Diff p ([j], b) ([j], c) ->
+  Diff p b c
 traceStarMatrix x0 n (Diff body) = Diff $ \b ->
   let dim = length x0
       -- Forward: iterate from caller-supplied seed
@@ -115,8 +113,8 @@ traceStarFromD ::
   (MergeZero (->) c) =>
   Double ->
   Int ->
-  Diff' p (Double, b) (Double, c) ->
-  Diff' p b c
+  Diff p (Double, b) (Double, c) ->
+  Diff p b c
 traceStarFromD x0 n (Diff body) =
   traceStarFrom (FieldStar x0) n (Diff body')
   where
@@ -150,8 +148,8 @@ traceStarMatrixD ::
   (MergeZero (->) c) =>
   [Double] ->
   Int ->
-  Diff' p ([Double], b) ([Double], c) ->
-  Diff' p b c
+  Diff p ([Double], b) ([Double], c) ->
+  Diff p b c
 traceStarMatrixD x0 n (Diff body) =
   traceStarMatrix (map FieldStar x0) n (Diff body')
   where

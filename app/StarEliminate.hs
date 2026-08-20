@@ -1,13 +1,11 @@
-{-# LANGUAGE PatternSynonyms #-}
-
 -- | Tests for star-elimination of '(,)' knots in linear pullback nets.
 module StarEliminate
   ( runStarEliminateTests,
   )
 where
 
-import Circuit.Diff.Backprop (backprop)
-import Circuit.Diff.Circuit (Diff', pattern Diff)
+import Circuit.Diff.Backprop (linearizeAt)
+import Circuit.Diff.Circuit (Diff (..))
 import Circuit.Diff.Eliminate (eliminateKnots)
 import Circuit.Diff.Pullback (Pullback (..), evalPullback)
 import Circuit.Net (Net (..))
@@ -103,9 +101,9 @@ runStarEliminateTests = do
                   (FieldStar 0.5 NHM.* FieldStar dy2, FieldStar dy2)
               )
           ) ::
-          Diff' () (FieldStar, FieldStar) (FieldStar, FieldStar)
-      innerKnot = Knot (Lift innerBody) :: Net (,) (,) (Diff' ()) FieldStar FieldStar
-      (FieldStar y, g) = backprop innerKnot (FieldStar 4.0)
+          Diff () (FieldStar, FieldStar) (FieldStar, FieldStar)
+      innerKnot = Knot (Lift innerBody) :: Net (,) (,) (Diff ()) FieldStar FieldStar
+      (FieldStar y, g) = linearizeAt innerKnot (FieldStar 4.0)
       gElim = eliminateKnots (FieldStar 0) g
       FieldStar gLazy = evalPullback g (FieldStar 1.0)
       FieldStar gElimVal = evalPullback gElim (FieldStar 1.0)

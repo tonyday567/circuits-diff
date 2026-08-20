@@ -5,7 +5,7 @@ module DiffCarrierTests
   )
 where
 
-import Circuit.Diff (Diff')
+import Circuit.Diff (Diff)
 import Circuit.Diff.Curvature.Surface (surfaceOfRevolutionK)
 import Circuit.Diff.Inverse (constDiff, implicit1N, inverseN, varDiff)
 import Circuit.Diff.Jet (taylor)
@@ -72,7 +72,7 @@ runDiffCarrierTests = do
 
   putStrLn "Inverse / implicit oracle tests"
 
-  let x :: Diff' p Double Double
+  let x :: Diff p Double Double
       x = varDiff
 
   assert "inverse: sqrt via x²" $
@@ -124,7 +124,7 @@ runDiffCarrierTests = do
 
   assert "RD.5: reverse chain rule" $
     let f = NHField.sin x
-        g = NHField.exp (varDiff :: Diff' p Double Double)
+        g = NHField.exp (varDiff :: Diff p Double Double)
      in rdcChain eps f g (1.0 :: Double) 1.0
 
   assert "RD.5: reverse chain rule on polynomial composition" $

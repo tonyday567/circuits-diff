@@ -1,12 +1,11 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
 
--- | Inverse and implicit functions via Newton iteration on 'Diff''.
+-- | Inverse and implicit functions via Newton iteration on 'Diff'.
 --
 -- These are first-order theorems in action: the inverse-function theorem
 -- says @(f⁻¹)'(f(a)) = 1/f'(a)@, and the implicit-function theorem says
 -- @dy/dx = -(∂F/∂y)⁻¹ · ∂F/∂x@.  We use those derivatives (pulled back by
--- 'Diff'') to drive Newton steps, and verify against exact oracles.
+-- 'Diff') to drive Newton steps, and verify against exact oracles.
 module Circuit.Diff.Inverse
   ( -- * Newton iteration
     newton,
@@ -19,18 +18,18 @@ module Circuit.Diff.Inverse
   )
 where
 
-import Circuit.Diff (Diff', runDiff, pattern Diff)
+import Circuit.Diff (Diff (..), runDiff)
 import NumHask.Algebra.Additive (Additive (..), Subtractive (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..))
 import Prelude hiding (negate, recip, (*), (+), (-), (/))
 import Prelude qualified as P
 
 -- | The identity differentiable function @x ↦ x@.
-varDiff :: Diff' p a a
+varDiff :: Diff p a a
 varDiff = Diff (\s -> (s, id))
 
 -- | Constant differentiable function.
-constDiff :: (Additive a) => b -> Diff' p a b
+constDiff :: (Additive a) => b -> Diff p a b
 constDiff b = Diff (P.const (b, P.const zero))
 
 -- | Newton iteration for solving @f(x) = target@.
@@ -38,7 +37,7 @@ constDiff b = Diff (P.const (b, P.const zero))
 -- @newton f target x0 n@ takes @n@ steps starting from @x0@.
 newton ::
   (Subtractive a, Divisive a) =>
-  Diff' p a a ->
+  Diff p a a ->
   a ->
   a ->
   P.Int ->
@@ -53,7 +52,7 @@ newton f target x0 n =
 -- | Newton iteration for the inverse value: find @x@ such that @f(x) = y@.
 inverseN ::
   (Subtractive a, Divisive a) =>
-  Diff' p a a ->
+  Diff p a a ->
   a ->
   a ->
   P.Int ->
@@ -62,10 +61,10 @@ inverseN f y = newton f y
 
 -- | Newton iteration for a scalar implicit equation: find @y@ such that
 -- @g(y) = 0@.  The caller fixes any ambient parameters (e.g. @x@ in
--- @F(x,y)=0@) by building them into @g@ with 'constDiff'.
+-- @F(x,y)=0@) by building them into @g@ with 'constDiff.
 implicit1N ::
   (Subtractive b, Divisive b) =>
-  Diff' p b b ->
+  Diff p b b ->
   b ->
   P.Int ->
   b

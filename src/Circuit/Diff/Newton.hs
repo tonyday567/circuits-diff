@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-
 -- | Tiny Newton / linear-solve utilities for differentiable systems.
 module Circuit.Diff.Newton
   ( solve2,

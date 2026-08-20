@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -11,9 +10,9 @@
 -- a cotangent on the output, produces the input cotangent and parameter
 -- gradients.
 --
--- This is the same shape as 'Circuit.Diff.Diff'' from @circuits-ad@, but with
+-- This is the same shape as 'Circuit.Diff.Diff' from @circuits-ad@, but with
 -- an explicit parameter carrier @p@.  When @p = ()@ and the parameter
--- gradient is discarded, 'DiffP' reduces to 'Diff'' (see 'toParam' and
+-- gradient is discarded, 'DiffP' reduces to 'Diff' (see 'toParam' and
 -- 'fromParam').
 --
 -- The representation is the denotation @p -> a -> (b, b -> (a, p))@ rather
@@ -33,7 +32,7 @@ module Circuit.Diff.Param
     splitP,
     joinP,
 
-    -- * Relationship to the phantom-tagged Diff' arrow
+    -- * Relationship to the phantom-tagged Diff arrow
     toParam,
     fromParam,
   )
@@ -43,7 +42,7 @@ import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..))
 import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 import Circuit.Dagger qualified as CD
-import Circuit.Diff (Diff', runDiff, pattern Diff)
+import Circuit.Diff (Diff (..), runDiff)
 import Circuit.Tensor (Action (..), Tensor (..))
 import Prelude hiding (id, (.))
 
@@ -52,7 +51,7 @@ import Prelude hiding (id, (.))
 -- >>> import Circuit.Category (Category (..))
 -- >>> import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 -- >>> import Circuit.Tensor (Action (..), Tensor (..))
--- >>> import Circuit.Diff (Diff' (..), Diff, runDiff)
+-- >>> import Circuit.Diff (Diff (..), Diff', runDiff)
 -- >>> import Prelude hiding (id, (.))
 
 ----------------------------------------------------------------------
@@ -279,37 +278,37 @@ joinP (DiffP f1) (DiffP f2) = DiffP $ \(p1, p2) a ->
 {-# INLINE joinP #-}
 
 ----------------------------------------------------------------------
--- Relationship to the phantom-tagged Diff' arrow
+-- Relationship to the phantom-tagged Diff arrow
 ----------------------------------------------------------------------
 
--- | Embed a phantom-tagged 'Diff'' into 'DiffP ()'.  The phantom tag is
+-- | Embed a phantom-tagged 'Diff' into 'DiffP ()'.  The phantom tag is
 -- discarded because 'DiffP' carries parameters at the value level.
 --
--- >>> let d = Diff' (\x -> (x * x, \dy -> 2 * x * dy)) :: Diff' () Double Double
+-- >>> let d = Diff (\x -> (x * x, \dy -> 2 * x * dy)) :: Diff () Double Double
 -- >>> let (y, pb) = runDiffP (toParam d) () 3.0
 -- >>> y
 -- 9.0
 -- >>> pb 1.0
 -- (6.0,())
-toParam :: Diff' q a b -> DiffP () a b
+toParam :: Diff q a b -> DiffP () a b
 toParam d = DiffP $ \_ a ->
   let (b, pb) = runDiff d a
    in (b, \db -> (pb db, ()))
 {-# INLINE toParam #-}
 
 -- | Project a parameter-free 'DiffP ()' back into the phantom-tagged
--- 'Diff'' arrow.
+-- 'Diff' arrow.
 --
 -- This is a section/retract pair with 'toParam':
 -- @fromParam . toParam = id@ for the parameter-free fragment.
 --
--- >>> let d = Diff' (\x -> (x * x, \dy -> 2 * x * dy)) :: Diff' () Double Double
+-- >>> let d = Diff (\x -> (x * x, \dy -> 2 * x * dy)) :: Diff () Double Double
 -- >>> let (y, pb) = runDiff (fromParam (toParam d)) 3.0
 -- >>> y
 -- 9.0
 -- >>> pb 1.0
 -- 6.0
-fromParam :: DiffP () a b -> Diff' () a b
+fromParam :: DiffP () a b -> Diff () a b
 fromParam (DiffP f) = Diff $ \a ->
   let (b, pb) = f () a
    in (b, fst . pb)

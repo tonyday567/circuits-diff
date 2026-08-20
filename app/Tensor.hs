@@ -1,7 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeOperators #-}
 
 module Tensor (runTensorTests) where
 
@@ -108,7 +107,7 @@ runTensorTowerTests = do
         ]
       coeffs =
         [ elementwiseTower cube k pt F.! [0, 0]
-          | k <- [0 .. 4]
+        | k <- [0 .. 4]
         ]
   mapM_ (\(k, (got, expc)) -> assertS ("cube d" ++ show k) got expc) (zip [0 :: Int ..] (zip coeffs ref))
 
@@ -143,7 +142,7 @@ runTensorTowerTests = do
       sigmoidJet x = one / (one + exp (negate x))
       sigCoeffs =
         [ elementwiseTower sigmoidJet k pt F.! [0, 0]
-          | k <- [0 .. 3]
+        | k <- [0 .. 3]
         ]
   mapM_ (\(k, (got, expc)) -> assertS ("sigmoid d" ++ show k) got expc) (zip [0 :: Int ..] (zip sigCoeffs sigRef))
 
@@ -156,12 +155,12 @@ runTensorTowerTests = do
       tanhRef =
         [ y0,
           1.0 - y0 * y0,
-          -2.0 * y0 * (1.0 - y0 * y0),
+          -(2.0 * y0 * (1.0 - y0 * y0)),
           (1.0 - y0 * y0) * (6.0 * y0 * y0 - 2.0)
         ]
       tanhCoeffs =
         [ elementwiseTower tanh k ptTanh F.! [0, 0]
-          | k <- [0 .. 3]
+        | k <- [0 .. 3]
         ]
   mapM_ (\(k, (got, expc)) -> assertS ("tanh d" ++ show k) got expc) (zip [0 :: Int ..] (zip tanhCoeffs tanhRef))
 

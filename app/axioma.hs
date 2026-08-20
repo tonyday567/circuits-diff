@@ -1,4 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
 
 module Main (main) where
@@ -6,8 +5,8 @@ module Main (main) where
 import Circuit (Loop, run)
 import Circuit qualified
 import Circuit.Channel (Traced (..))
-import Circuit.Diff.Backprop (backprop)
-import Circuit.Diff.Circuit (Diff, runDiff, traceNFrom, pattern Diff)
+import Circuit.Diff.Backprop (linearizeAt)
+import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
 import Circuit.Diff.Pullback (evalPullback)
 import Circuit.Net (Net (..))
 import Curvature (runCurvatureTests)
@@ -36,18 +35,18 @@ assert name got expected =
       putStrLn $ "  FAIL " ++ name ++ ": got " ++ show got ++ ", expected " ++ show expected
       exitFailure
 
-sq :: Diff Double Double
+sq :: Diff' Double Double
 sq = Diff (\x -> (x * x, \d -> 2 * x * d))
 
-constD :: Double -> Diff Double Double
+constD :: Double -> Diff' Double Double
 constD c = Diff (const (c, const 0))
 
 -- | Net computing 2*x^2 via copy, parallel squares, then add.
-quadNet :: Net (,) (,) Diff Double Double
+quadNet :: Net (,) (,) Diff' Double Double
 quadNet = Compose Plus (Compose (Par (Lift sq) (Lift sq)) Copy)
 
 -- | Linear feedback loop: x' = 0.3*x + 2*b, c = x + b.
-loopBody :: Diff (Double, Double) (Double, Double)
+loopBody :: Diff' (Double, Double) (Double, Double)
 loopBody = Diff $ \(x, b) ->
   let x' = 0.3 * x + 2 * b
       c = x + b
@@ -56,7 +55,7 @@ loopBody = Diff $ \(x, b) ->
 main :: IO ()
 main = do
   putStrLn "nonlinear 2x^2 net"
-  let (y, g) = backprop quadNet 3.0
+  let (y, g) = linearizeAt quadNet 3.0
   assert "value" y 18.0
   assert "gradient" (evalPullback g 1.0) 12.0
 
@@ -66,40 +65,40 @@ main = do
   assert "gradient" (pbLoop 1.0) (1.0 / (1.0 - 0.3) * 2.0 + 1.0)
 
   putStrLn "direct primitive via run"
-  let (yPrim, pbPrim) = runDiff (run (Circuit.Lift sq :: Loop (,) Diff Double Double)) 3.0
+  let (yPrim, pbPrim) = runDiff (run (Circuit.Lift sq :: Loop (,) Diff' Double Double)) 3.0
   assert "value" yPrim 9.0
   assert "gradient" (pbPrim 1.0) 6.0
 
   putStrLn "NumHask Multiplicative instance (id * id)"
-  let (y1, pb1) = runDiff (id * id :: Diff Double Double) 3.0
+  let (y1, pb1) = runDiff (id * id :: Diff' Double Double) 3.0
   assert "value" y1 9.0
   assert "gradient" (pb1 1.0) 6.0
 
   putStrLn "NumHask polynomial (2x^2 + 3x + 5)"
-  let poly = constD 2 * id * id + constD 3 * id + constD 5 :: Diff Double Double
+  let poly = constD 2 * id * id + constD 3 * id + constD 5 :: Diff' Double Double
       (y2, pb2) = runDiff poly 1.0
   assert "value" y2 10.0
   assert "gradient" (pb2 1.0) 7.0
 
   putStrLn "NumHask ExpField instance (exp)"
-  let (y3, pb3) = runDiff (exp id :: Diff Double Double) 0.0
+  let (y3, pb3) = runDiff (exp id :: Diff' Double Double) 0.0
   assert "value" y3 1.0
   assert "gradient" (pb3 1.0) 1.0
 
   putStrLn "NumHask TrigField instance (sin)"
-  let (y4, pb4) = runDiff (sin id :: Diff Double Double) 0.0
+  let (y4, pb4) = runDiff (sin id :: Diff' Double Double) 0.0
   assert "value" y4 0.0
   assert "gradient" (pb4 1.0) 1.0
 
   putStrLn "NumHask Divisive instance (recip)"
-  let (y5, pb5) = runDiff (recip id :: Diff Double Double) 2.0
+  let (y5, pb5) = runDiff (recip id :: Diff' Double Double) 2.0
   assert "value" y5 0.5
   assert "gradient" (pb5 1.0) (-0.25)
 
   putStrLn "Trace Diff Either (scale-by-n loop)"
   let scaleByN n = trace body
         where
-          body :: Diff (Either (Int, Double, Double) Double) (Either (Int, Double, Double) Double)
+          body :: Diff' (Either (Int, Double, Double) Double) (Either (Int, Double, Double) Double)
           body = Diff $ \case
             Right x -> (Left (n, 0, x), \case Left (_, _, dx) -> Right dx; Right _ -> error "scaleByN: unexpected Right cotangent")
             Left (i, acc, x)
@@ -117,10 +116,10 @@ main = do
           ( \(x, b) ->
               ((0.0, x + 2.0 * b), \(_, dc) -> (dc, 2.0 * dc))
           ) ::
-          Diff (Double, Double) (Double, Double)
-      innerKnot = Knot (Lift innerBody) :: Net (,) (,) Diff Double Double
-      net = Par (Lift sq) innerKnot :: Net (,) (,) Diff (Double, Double) (Double, Double)
-      (y7, g7) = backprop net (3.0, 4.0)
+          Diff' (Double, Double) (Double, Double)
+      innerKnot = Knot (Lift innerBody) :: Net (,) (,) Diff' Double Double
+      net = Par (Lift sq) innerKnot :: Net (,) (,) Diff' (Double, Double) (Double, Double)
+      (y7, g7) = linearizeAt net (3.0, 4.0)
       (gx, gb) = evalPullback g7 (1.0, 1.0)
   assert "value fst" (fst y7) 9.0
   assert "value snd" (snd y7) 8.0

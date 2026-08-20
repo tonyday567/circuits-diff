@@ -1,4 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
 
 -- | Riemann curvature from a Levi-Civita connection.
@@ -30,7 +29,7 @@ module Circuit.Diff.Curvature
   )
 where
 
-import Circuit.Diff (Diff, runDiff, pattern Diff)
+import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Diff.Chart
   ( christoffel2D,
     raise2D,
@@ -57,8 +56,8 @@ gammaComp (g000, g001, g010, g011, g100, g101, g110, g111) c a b =
 
 gamma2DAt ::
   (Field a) =>
-  Diff ((a, a), (a, a)) (a, a) ->
-  Diff ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
   (a, a) ->
   Gamma2D a
 gamma2DAt = christoffel2D
@@ -76,8 +75,8 @@ bump2 _ _ _ = error "bump2: bad index"
 -- | @∂_μ Γ^ρ_{ab}@ by central differences of 'christoffel2D'.
 partialGamma2D ::
   (Field a, FromInteger a) =>
-  Diff ((a, a), (a, a)) (a, a) ->
-  Diff ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
   (a, a) ->
   Int ->
   Int ->
@@ -97,8 +96,8 @@ partialGamma2D lower raise x mu rho a b =
 -- >           + Γ^ρ_{μλ} Γ^λ_{νσ} − Γ^ρ_{νλ} Γ^λ_{μσ}
 riemann2D ::
   (Field a, FromInteger a) =>
-  Diff ((a, a), (a, a)) (a, a) ->
-  Diff ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
   (a, a) ->
   Int ->
   Int ->
@@ -122,8 +121,8 @@ riemann2D lower raise x rho sigma mu nu =
 -- | Ricci @R_{σν} = R^ρ_{σρν}@ (sum on ρ).
 ricci2D ::
   (Field a, FromInteger a) =>
-  Diff ((a, a), (a, a)) (a, a) ->
-  Diff ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
   (a, a) ->
   Int ->
   Int ->
@@ -134,8 +133,8 @@ ricci2D lower raise x sigma nu =
 -- | Ricci scalar @R = g^{σν} R_{σν}@.
 ricciScalar2D ::
   (Field a, FromInteger a) =>
-  Diff ((a, a), (a, a)) (a, a) ->
-  Diff ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
+  Diff' ((a, a), (a, a)) (a, a) ->
   (a, a) ->
   a
 ricciScalar2D lower raise x =
@@ -158,7 +157,7 @@ ricciScalar2D lower raise x =
 -- | Unit 2-sphere metric in spherical coordinates @(θ, φ)@.
 --
 -- @ds² = dθ² + sin²θ dφ²@.  Analytic Ricci scalar is @2@.
-sphereMetricLower :: (TrigField a) => Diff ((a, a), (a, a)) (a, a)
+sphereMetricLower :: (TrigField a) => Diff' ((a, a), (a, a)) (a, a)
 sphereMetricLower = Diff $ \((theta, _), (vth, vph)) ->
   let s = sin theta
       ss = s * s
@@ -170,7 +169,7 @@ sphereMetricLower = Diff $ \((theta, _), (vth, vph)) ->
           )
       )
 
-sphereMetricRaise :: (TrigField a) => Diff ((a, a), (a, a)) (a, a)
+sphereMetricRaise :: (TrigField a) => Diff' ((a, a), (a, a)) (a, a)
 sphereMetricRaise = raise2D sphereMetricLower
 
 --------------------------------------------------------------------------------

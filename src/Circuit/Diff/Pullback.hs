@@ -15,7 +15,7 @@
 -- This is the arrow that 'linearizeAt' builds: a 'Net' whose wires
 -- carry pullbacks rather than smooth maps.  It is the honest linear
 -- semantics behind reverse-mode AD, free of the second-derivative
--- confusion that comes from trying to compose 'Diff' arrows directly.
+-- confusion that comes from trying to compose 'Diff arrows directly.
 module Circuit.Diff.Pullback
   ( -- * Linear cotangent arrow
     Pullback (..),
@@ -96,7 +96,7 @@ instance Strength (,) Pullback where
 --
 -- solved by the same lazy knot that 'Trace Diff (,)' uses.  For
 -- strict carriers with nonzero channel self-coupling this diverges,
--- exactly as the lazy 'Diff' trace does.  Unlike the 'Diff' case,
+-- exactly as the lazy 'Diff trace does.  Unlike the 'Diff case,
 -- though, the equation here is /always affine/ — 'Pullback' arrows are
 -- linear by construction — so a knot over a star-semiring carrier can
 -- be eliminated outright ('NumHask' @star@ \/

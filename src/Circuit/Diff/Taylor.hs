@@ -2,7 +2,6 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 
 -- | Scalar Taylor tower as a circuits arrow.
 --
@@ -41,7 +40,7 @@ module Circuit.Diff.Taylor
     evalTaylor,
     evalTaylorDerivs,
 
-    -- * Bridge from 'Diff''
+    -- * Bridge from 'Diff'
     taylorCoeffsFromDiff,
     approxTaylorFromDiff,
   )
@@ -50,7 +49,7 @@ where
 import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
 import Circuit.Dagger (Copy (..), Discard (..), Merge (..), Zero (..))
-import Circuit.Diff (Diff', runDiff)
+import Circuit.Diff (Diff, runDiff)
 import Circuit.Diff.Jet (Jet (..), constant, variable)
 import Circuit.Tensor (Action (..), Tensor (..))
 import Data.Proxy (Proxy (..))
@@ -273,15 +272,15 @@ evalTaylorDerivs t x =
 {-# INLINE evalTaylorDerivs #-}
 
 -- ---------------------------------------------------------------------------
--- Bridge from a 'Diff'' scalar function
+-- Bridge from a 'Diff' scalar function
 -- ---------------------------------------------------------------------------
 
--- | Approximate Taylor coefficients of a 'Diff'' scalar function at a point
+-- | Approximate Taylor coefficients of a 'Diff' scalar function at a point
 -- using forward differences.
 --
 -- The returned list @[c0, c1, ..., ck]@ represents
 -- @f(x0 + eps) = c0 + c1*eps + c2*eps^2 + ... + ck*eps^k@.
-taylorCoeffsFromDiff :: Diff' p Double Double -> Double -> Int -> [Double]
+taylorCoeffsFromDiff :: Diff p Double Double -> Double -> Int -> [Double]
 taylorCoeffsFromDiff f x0 k =
   let h = 1e-4 * max 1.0 (abs x0)
       samples = [fst (runDiff f (x0 + fromIntegral j * h)) | j <- [0 .. k]]
@@ -292,12 +291,12 @@ taylorCoeffsFromDiff f x0 k =
     factD 0 = 1.0
     factD n' = fromIntegral (product [1 .. n' :: Int] :: Int)
 
--- | Build a 'Taylor' morphism that approximates a 'Diff'' scalar function
+-- | Build a 'Taylor' morphism that approximates a 'Diff' scalar function
 -- near @x0@.
 approxTaylorFromDiff ::
   forall n p.
   (KnownNat n) =>
-  Diff' p Double Double ->
+  Diff p Double Double ->
   Double ->
   Taylor n Double Double
 approxTaylorFromDiff f x0 =

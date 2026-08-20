@@ -1,15 +1,14 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
--- | Eshkol-style AD operators on top of the 'Circuit.Diff.Diff'' carrier.
+-- | Eshkol-style AD operators on top of the 'Circuit.Diff.Diff' carrier.
 --
--- These are convenience wrappers around 'runDiff'.  They expose a JAX-like
+-- These are convenience wrappers around 'runDiff.  They expose a JAX-like
 -- surface --- derivative, gradient, jacobian, hessian, divergence, curl,
 -- laplacian --- while keeping the substrate's exact reverse-mode engine
 -- underneath for first-order operators.
 --
 -- Higher-order scalar towers now use the 'Circuit.Diff.Taylor' carrier: a
--- 'Diff'' function is sampled near the expansion point and a truncated Taylor
+-- 'Diff' function is sampled near the expansion point and a truncated Taylor
 -- morphism is built from the finite-difference table.  This is an approximation
 -- (the exact tower would require a dedicated forward-mode or Taylor-mode
 -- carrier from the start), but it is enough to make 'derivativeN', 'taylor',
@@ -26,7 +25,7 @@ module Circuit.Diff.Operators
     curl,
     laplacian,
 
-    -- * Higher-order towers (finite-difference bridge from Diff')
+    -- * Higher-order towers (finite-difference bridge from Diff)
     derivativeN,
     taylor,
 
@@ -41,7 +40,7 @@ module Circuit.Diff.Operators
   )
 where
 
-import Circuit.Diff (Diff', runDiff)
+import Circuit.Diff (Diff (..), runDiff)
 import Circuit.Diff.Expr (Expr, derivativeNExpr, diffExpr, taylorExpr)
 import Circuit.Diff.Jet (Jet)
 import Circuit.Diff.Jet qualified as Jet
@@ -51,12 +50,15 @@ import GHC.TypeNats (SomeNat (..), someNatVal)
 import Numeric.Natural (Natural)
 import Prelude
 
+-- $setup
+-- >>> import Circuit.Diff (Diff (..))
+
 -- | Scalar derivative: @f : R -> R@ at @x@.
 --
--- >>> let sq = Diff (\x -> (x * x, \d -> 2 * x * d)) :: Diff' () Double Double
+-- >>> let sq = Diff (\x -> (x * x, \d -> 2 * x * d)) :: Diff () Double Double
 -- >>> derivative sq 3.0
 -- 6.0
-derivative :: Diff' p Double Double -> Double -> Double
+derivative :: Diff p Double Double -> Double -> Double
 derivative f x =
   let (_, pb) = runDiff f x
    in pb 1.0
@@ -64,7 +66,7 @@ derivative f x =
 -- | Gradient of a scalar function: @f : R^n -> R@ at @v@.
 --
 -- Returns the vector @∇f(v)@ by applying the pullback to the unit scalar.
-gradient :: Diff' p [Double] Double -> [Double] -> [Double]
+gradient :: Diff p [Double] Double -> [Double] -> [Double]
 gradient f v =
   let (_, pb) = runDiff f v
    in pb 1.0
@@ -74,7 +76,7 @@ gradient f v =
 -- Returns an @m × n@ matrix: outer index is output component, inner index is
 -- input component.  Each row is obtained by applying the pullback to one
 -- output basis vector.
-jacobian :: Diff' p [Double] [Double] -> [Double] -> [[Double]]
+jacobian :: Diff p [Double] [Double] -> [Double] -> [[Double]]
 jacobian f v =
   let (y, pb) = runDiff f v
       m = length y
@@ -82,14 +84,14 @@ jacobian f v =
    in [pb (basis i) | i <- [0 .. m - 1]]
 
 -- | Trace of the Jacobian: @div f v = Σ_i ∂f_i/∂x_i@.
-divergence :: Diff' p [Double] [Double] -> [Double] -> Double
+divergence :: Diff p [Double] [Double] -> [Double] -> Double
 divergence f v =
   let j = jacobian f v
       n = length v
    in sum [j !! i !! i | i <- [0 .. n - 1]]
 
 -- | Curl of a 3-D vector field: @f : R^3 -> R^3@ at @v@.
-curl :: Diff' p [Double] [Double] -> [Double] -> [Double]
+curl :: Diff p [Double] [Double] -> [Double] -> [Double]
 curl f v =
   let j = jacobian f v
       at r c = (j !! r) !! c
@@ -101,7 +103,7 @@ curl f v =
 -- | Hessian of a scalar function: @f : R^n -> R@ at @v@.
 --
 -- Implemented by central second-order finite differences; approximate.
-hessian :: Diff' p [Double] Double -> [Double] -> [[Double]]
+hessian :: Diff p [Double] Double -> [Double] -> [[Double]]
 hessian f v =
   let n = length v
       h = 1e-4 * max 1.0 (sqrt (sum (map (^ (2 :: Int)) v)))
@@ -119,7 +121,7 @@ hessian f v =
 -- | Laplacian of a scalar function: @f : R^n -> R@ at @v@.
 --
 -- Trace of the finite-difference Hessian.
-laplacian :: Diff' p [Double] Double -> [Double] -> Double
+laplacian :: Diff p [Double] Double -> [Double] -> Double
 laplacian f v =
   let h = hessian f v
       n = length v
@@ -129,7 +131,7 @@ laplacian f v =
 --
 -- For @n <= 1@ this is exact reverse-mode AD.  Higher orders are read from
 -- a finite-difference Taylor tower built with 'Circuit.Diff.Taylor'.
-derivativeN :: Diff' p Double Double -> Double -> Int -> Double
+derivativeN :: Diff p Double Double -> Double -> Int -> Double
 derivativeN f x 0 = fst (runDiff f x)
 derivativeN f x n
   | n < 0 = error "derivativeN: negative order"
@@ -140,7 +142,7 @@ derivativeN f x n
 -- The result is @[f(x0), f'(x0), f''(x0), ..., f^(k)(x0)]@.  The constant
 -- and linear terms are exact; higher terms come from a finite-difference
 -- Taylor tower built with 'Circuit.Diff.Taylor'.
-taylor :: Diff' p Double Double -> Double -> Int -> [Double]
+taylor :: Diff p Double Double -> Double -> Int -> [Double]
 taylor _ _ k | k < 0 = error "taylor: negative order"
 taylor f x0 k =
   case someNatVal (fromIntegral k :: Natural) of

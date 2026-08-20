@@ -1,6 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE TypeOperators #-}
 
 -- | Tensor AD on top of 'Harpie.Fixed.Array' and 'Circuit.Mat.Square'.
 --
@@ -9,10 +7,10 @@
 -- * forward-mode Taylor towers for square-matrix computations, via 'Jet'
 --   instantiated at 'Square n Double';
 -- * elementwise towers by mapping scalar 'Jet's across array elements;
--- * explicit reverse-mode 'Diff'' primitives for matrix multiplication,
+-- * explicit reverse-mode 'Diff' primitives for matrix multiplication,
 --   transpose, sum, scale, and elementwise activations.
 --
--- The generic 'Multiplicative' instance of 'Diff'' is /not/ used for matrix
+-- The generic 'Multiplicative' instance of 'Diff' is /not/ used for matrix
 -- multiplication because its product-rule pullback is the wrong adjoint for
 -- non-commutative multiplication.
 module Circuit.Diff.Tensor
@@ -32,7 +30,7 @@ module Circuit.Diff.Tensor
   )
 where
 
-import Circuit.Diff (Diff', pattern Diff)
+import Circuit.Diff (Diff (..))
 import Circuit.Diff.Jet (Jet (..), taylorDers, variable)
 import Circuit.Mat.Square (Square)
 import Data.Foldable (foldl')
@@ -45,7 +43,7 @@ import NumHask.Algebra.Additive (Additive (..), Subtractive (..))
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..), recip)
 import NumHask.Data.Integral (FromInteger (..))
-import Prelude hiding (abs, cos, exp, fromInteger, fromRational, log, recip, sin, sqrt, tanh, (/), (*), (+), (-))
+import Prelude hiding (abs, cos, exp, fromInteger, fromRational, log, recip, sin, sqrt, tanh, (*), (+), (-), (/))
 import Prelude qualified as P
 
 -- ---------------------------------------------------------------------------
@@ -114,7 +112,7 @@ elementwiseTower f k arr =
 matMulD ::
   forall n p.
   (KnownNat n) =>
-  Diff' p (Square n Double, Square n Double) (Square n Double)
+  Diff p (Square n Double, Square n Double) (Square n Double)
 matMulD =
   Diff $ \(a, b) ->
     let y = a * b
@@ -127,7 +125,7 @@ matMulD =
 transposeD ::
   forall m n p.
   (KnownNat m, KnownNat n) =>
-  Diff' p (Array '[m, n] Double) (Array '[n, m] Double)
+  Diff p (Array '[m, n] Double) (Array '[n, m] Double)
 transposeD =
   Diff $ \a ->
     let y = F.transpose a
@@ -137,7 +135,7 @@ transposeD =
 sumD ::
   forall s p.
   (KnownNats s) =>
-  Diff' p (Array s Double) Double
+  Diff p (Array s Double) Double
 sumD =
   Diff $ \a ->
     let y = foldl' (+) zero a
@@ -147,7 +145,7 @@ sumD =
 scaleD ::
   forall s p.
   Double ->
-  Diff' p (Array s Double) (Array s Double)
+  Diff p (Array s Double) (Array s Double)
 scaleD s =
   Diff $ \a ->
     let y = fmap (s *) a
@@ -158,7 +156,7 @@ elementwiseD ::
   forall s p.
   (KnownNats s) =>
   (Double -> (Double, Double -> Double)) ->
-  Diff' p (Array s Double) (Array s Double)
+  Diff p (Array s Double) (Array s Double)
 elementwiseD phi =
   Diff $ \a ->
     let (ys, grads) = unzipA (fmap phi a)
@@ -169,7 +167,7 @@ elementwiseD phi =
 sigmoidD ::
   forall s p.
   (KnownNats s) =>
-  Diff' p (Array s Double) (Array s Double)
+  Diff p (Array s Double) (Array s Double)
 sigmoidD = elementwiseD $ \x ->
   let s = recip (1 + exp (-x))
    in (s, \db -> db * s * (1 - s))
@@ -178,7 +176,7 @@ sigmoidD = elementwiseD $ \x ->
 tanhD ::
   forall s p.
   (KnownNats s) =>
-  Diff' p (Array s Double) (Array s Double)
+  Diff p (Array s Double) (Array s Double)
 tanhD = elementwiseD $ \x ->
   let t = tanh x
    in (t, \db -> db * (1 - t * t))

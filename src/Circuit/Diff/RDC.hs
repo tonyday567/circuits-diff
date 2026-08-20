@@ -1,8 +1,7 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RebindableSyntax #-}
 
--- | Cartesian reverse differential category structure on 'Diff''.
+-- | Cartesian reverse differential category structure on 'Diff'.
 --
 -- A /Cartesian reverse differential category/ (Cockett, Cruttwell, Gallagher,
 -- Lemay, MacAdam, Plotkin, Pronk, CSL 2020) is a Cartesian left-additive
@@ -11,7 +10,7 @@
 -- > R[f] : A × B → A
 --
 -- for every morphism @f : A → B@, satisfying seven coherence axioms [RD.1]–
--- [RD.7].  For 'Diff'' the combinator is exactly the bundled pullback:
+-- [RD.7].  For 'Diff' the combinator is exactly the bundled pullback:
 --
 -- > R[f](a, db) = snd (runDiff f a) db
 --
@@ -23,7 +22,7 @@ module Circuit.Diff.RDC
   ( -- * Reverse derivative combinator
     rdc,
 
-    -- * Cartesian helpers on 'Diff''
+    -- * Cartesian helpers on 'Diff'
     fstD,
     sndD,
     pairD,
@@ -44,7 +43,7 @@ module Circuit.Diff.RDC
   )
 where
 
-import Circuit.Diff (Diff', runDiff, pattern Diff)
+import Circuit.Diff (Diff (..), runDiff)
 import Circuit.Diff.Jet (constant, taylor)
 import Control.Category
 import NumHask.Algebra.Additive (Additive (..))
@@ -56,33 +55,33 @@ import Prelude qualified as P
 
 -- | Reverse derivative combinator.
 --
--- For @f : Diff' p a b@, the reverse derivative @R[f] : (a, b) -> a@ maps a
+-- For @f : Diff p a b@, the reverse derivative @R[f] : (a, b) -> a@ maps a
 -- point @a@ and an output cotangent @db@ to the input cotangent @da@.
 --
 -- >>> import NumHask.Algebra.Field qualified as NHField
 -- >>> import Circuit.Diff
--- >>> let x = Diff (\s -> (s, \db -> db)) :: Diff Double Double
+-- >>> let x = Diff (\s -> (s, \db -> db)) :: Diff' Double Double
 -- >>> rdc (NHField.sin x) (0.0, 1.0)
 -- 1.0
-rdc :: Diff' p a b -> (a, b) -> a
+rdc :: Diff p a b -> (a, b) -> a
 rdc (Diff f) (a, db) =
   let (_, pullback) = f a
    in pullback db
 
--- | First projection as a 'Diff'' morphism.
-fstD :: (Additive b) => Diff' p (a, b) a
+-- | First projection as a 'Diff' morphism.
+fstD :: (Additive b) => Diff p (a, b) a
 fstD = Diff $ \(a, _) -> (a, \da -> (da, zero))
 
--- | Second projection as a 'Diff'' morphism.
-sndD :: (Additive a) => Diff' p (a, b) b
+-- | Second projection as a 'Diff' morphism.
+sndD :: (Additive a) => Diff p (a, b) b
 sndD = Diff $ \(_, b) -> (b, \db -> (zero, db))
 
--- | Pairing of two 'Diff'' morphisms with the same source.
+-- | Pairing of two 'Diff' morphisms with the same source.
 pairD ::
   (Additive a) =>
-  Diff' p a b ->
-  Diff' p a c ->
-  Diff' p a (b, c)
+  Diff p a b ->
+  Diff p a c ->
+  Diff p a (b, c)
 pairD (Diff f) (Diff g) = Diff $ \a ->
   let (b, pb) = f a
       (c, pc) = g a
@@ -93,12 +92,12 @@ pairD (Diff f) (Diff g) = Diff $ \a ->
 -- | Fork a single morphism into a pair: @forkD f = pairD f f@.
 forkD ::
   (Additive a) =>
-  Diff' p a b ->
-  Diff' p a (b, b)
+  Diff p a b ->
+  Diff p a (b, b)
 forkD f = pairD f f
 
 -- | Unique morphism to the terminal object, returning the zero cotangent.
-terminalD :: (Additive a) => Diff' p a ()
+terminalD :: (Additive a) => Diff p a ()
 terminalD = Diff $ \_ -> ((), \_ -> zero)
 
 -- | Helper: compare two values up to a tolerance.
@@ -110,8 +109,8 @@ near tol x y = P.abs (x P.- y) < tol
 rdcAdditive ::
   (Additive a, Additive b, P.Fractional a, P.Ord a) =>
   a ->
-  Diff' p a b ->
-  Diff' p a b ->
+  Diff p a b ->
+  Diff p a b ->
   a ->
   b ->
   b ->
@@ -129,7 +128,7 @@ rdcAdditive tol f g a db1 db2 =
 rdcLinear ::
   (Additive a, Additive b, P.Fractional a, P.Ord a) =>
   a ->
-  Diff' p a b ->
+  Diff p a b ->
   a ->
   b ->
   b ->
@@ -176,8 +175,8 @@ rdcSnd tol x db =
 rdcPairing ::
   (Additive a, Additive b, Additive c, P.Fractional a, P.Ord a) =>
   a ->
-  Diff' p a b ->
-  Diff' p a c ->
+  Diff p a b ->
+  Diff p a c ->
   a ->
   (b, c) ->
   (b, c) ->
@@ -200,8 +199,8 @@ rdcTerminal tol a = near tol (rdc terminalD (a, ())) zero
 rdcChain ::
   (P.Fractional a, P.Ord a) =>
   a ->
-  Diff' p a b ->
-  Diff' p b c ->
+  Diff p a b ->
+  Diff p b c ->
   a ->
   c ->
   Bool
@@ -218,7 +217,7 @@ rdcChain tol f g a dc =
 rdcHomogeneous ::
   (Multiplicative a, P.Fractional a, P.Ord a) =>
   a ->
-  Diff' p a a ->
+  Diff p a a ->
   a ->
   a ->
   a ->

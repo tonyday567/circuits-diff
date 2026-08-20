@@ -1,4 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE TupleSections #-}
 
@@ -12,7 +11,7 @@
 --   * conjugate only at the boundary — composition of adjoints is free because
 --     the intermediate metrics cancel;
 --   * @g@ is a field, not a matrix — the first interesting instance is polar
---     @g = diag(1, r^2)@, so @g@ is represented as a 'Diff'.  The metric's
+--     @g = diag(1, r^2)@, so @g@ is represented as a 'Diff.  The metric's
 --     pullback carries @∂g@ in its point-slot; currently that derivative is
 --     hand-coded in each metric, with nested AD as the future honest source.
 --
@@ -29,7 +28,7 @@ import Circuit.Diff.Chart
     polarMetricLower,
     polarMetricRaise,
   )
-import Circuit.Diff.Circuit (Diff, runDiff, pattern Diff)
+import Circuit.Diff.Circuit (Diff (..), Diff', runDiff)
 import Circuit.Diff.Metric (adjointWith)
 import NumHask.Prelude
 import Prelude ()
@@ -55,18 +54,18 @@ assertV2 name (x, y) (x', y') = do
   assert (name ++ " snd") y y'
 
 -- | Euclidean metric @g = δ@ on @R@: lower and raise are both the identity.
-euclidean1D :: Diff (Double, Double) Double
+euclidean1D :: Diff' (Double, Double) Double
 euclidean1D = Diff $ \(_, v) -> (v, (0,))
 
 -- | Euclidean metric @g = δ@ on @R^2@: lower and raise are both the identity.
-euclidean2D :: Diff ((Double, Double), (Double, Double)) (Double, Double)
+euclidean2D :: Diff' ((Double, Double), (Double, Double)) (Double, Double)
 euclidean2D = Diff $ \(_, v) -> (v, ((0, 0),))
 
 -- | Polar metric @g = diag(1, r^2)@ in coordinates @(r, θ)@.
 --
 -- Lower: @(v_r, v_θ) ↦ (v_r, r^2 v_θ)@.
 -- Raise: @(c_r, c_θ) ↦ (c_r, c_θ / r^2)@.
-lowerPolar :: Diff ((Double, Double), (Double, Double)) (Double, Double)
+lowerPolar :: Diff' ((Double, Double), (Double, Double)) (Double, Double)
 lowerPolar = Diff $ \((r, _), (vr, vtheta)) ->
   ( (vr, r * r * vtheta),
     \(dcr, dctheta) ->
@@ -75,7 +74,7 @@ lowerPolar = Diff $ \((r, _), (vr, vtheta)) ->
       )
   )
 
-raisePolar :: Diff ((Double, Double), (Double, Double)) (Double, Double)
+raisePolar :: Diff' ((Double, Double), (Double, Double)) (Double, Double)
 raisePolar = Diff $ \((r, _), (cr, ctheta)) ->
   let rr = r * r
    in ( (cr, ctheta / rr),
@@ -86,7 +85,7 @@ raisePolar = Diff $ \((r, _), (cr, ctheta)) ->
       )
 
 -- | A simple nonlinear map @(r, θ) -> r^2 cos θ@ used for the polar oracle.
-fPolar :: Diff (Double, Double) Double
+fPolar :: Diff' (Double, Double) Double
 fPolar = Diff $ \(r, theta) ->
   let val = r * r * cos theta
    in ( val,
@@ -94,7 +93,7 @@ fPolar = Diff $ \(r, theta) ->
       )
 
 -- | Conversion from polar coordinates to cartesian coordinates.
-polarToCart :: Diff (Double, Double) (Double, Double)
+polarToCart :: Diff' (Double, Double) (Double, Double)
 polarToCart = Diff $ \(r, theta) ->
   let x = r * cos theta
       y = r * sin theta
@@ -107,7 +106,7 @@ polarToCart = Diff $ \(r, theta) ->
 
 -- | Euclidean gradient of @fPolar ∘ cartToPolar@, expressed in cartesian
 -- coordinates.  This is the reference for the polar oracle.
-fCart :: Diff (Double, Double) Double
+fCart :: Diff' (Double, Double) Double
 fCart = Diff $ \(x, y) ->
   let r = sqrt (x * x + y * y)
       val = x * r

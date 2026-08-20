@@ -1,24 +1,21 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | 'Diff'' as a circuits arrow.
+-- | 'Diff' as a circuits arrow.
 --
 -- This module gives the instances that turn the differentiable carrier
--- 'Circuit.Diff.Diff'' into a 'Circuit.Category.Category' with tracing,
+-- 'Circuit.Diff.Diff' into a 'Circuit.Category.Category' with tracing,
 -- channels, strength, tensor products, and bimonoid structure.  Keeping the
--- instances in the same package as the 'Diff'' type avoids the orphan
+-- instances in the same package as the 'Diff' type avoids the orphan
 -- instances that would arise if 'circuits-ad' defined them for a carrier
 -- living elsewhere.
 module Circuit.Diff.Circuit
   ( -- * Re-exports from the carrier
-    Diff,
+    Diff (..),
     Diff',
-    pattern Diff,
-    runDiff,
 
     -- * Traced variants
     traceNFrom,
@@ -34,7 +31,7 @@ import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
 import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 import Circuit.Dagger qualified as CD
-import Circuit.Diff (Diff, Diff', runDiff, pattern Diff)
+import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Tensor (Action (..), Tensor (..))
 import Data.Bifunctor
 import NumHask.Algebra.Additive qualified as NHA
@@ -46,12 +43,12 @@ import Prelude hiding (id, (.))
 -- >>> import Circuit.Dagger (Copy (..), Merge (..))
 -- >>> import Circuit.Tensor (Action (..), Tensor (..))
 
--- | 'Circuit.Category.Category' for 'Diff''.
+-- | 'Circuit.Category.Category' for 'Diff'.
 --
--- 'Circuit.Diff' still provides 'Control.Category'; circuits needs the local
+-- 'Circuit.Diff still provides 'Control.Category'; circuits needs the local
 -- 'Category' with associated 'Ob' (default @()@) so 'Monoidal' / 'Traced' /
 -- free 'Trace' folds typecheck after kind-gen.
-instance Category (Diff' p) where
+instance Category (Diff p) where
   id = Diff (\a -> (a, id))
   Diff f . Diff g = Diff $ \a ->
     let (b, gb) = g a
@@ -60,7 +57,7 @@ instance Category (Diff' p) where
   {-# INLINE id #-}
   {-# INLINE (.) #-}
 
--- | 'Trace' for 'Diff' with the @(,)@ tensor.
+-- | 'Trace' for 'Diff with the @(,)@ tensor.
 --
 -- The forward pass ties the standard lazy knot:
 --
@@ -85,7 +82,7 @@ instance Category (Diff' p) where
 -- because GHC's heap holds the graph.  For linear backward maps this is a
 -- Neumann series computed lazily; for general maps it is the implicit function
 -- theorem as a lazy knot.
-instance Traced (,) (Diff' p) where
+instance Traced (,) (Diff p) where
   trace (Diff body) = Diff $ \b ->
     let -- Forward: standard lazy knot
         ~((a, c), backward) = body (a, b)
@@ -95,14 +92,14 @@ instance Traced (,) (Diff' p) where
            in snd bd
      in (c, pullback)
 
--- | Cartesian channel plumbing for 'Diff'.
-instance Channel (,) (Diff' p) where
+-- | Cartesian channel plumbing for 'Diff.
+instance Channel (,) (Diff p) where
   assoc = Diff (\((s, s'), x) -> ((s, (s', x)), \(s'', (s''', x')) -> ((s'', s'''), x')))
   assoc' = Diff (\(s, (s', x)) -> (((s, s'), x), \((s'', s'''), x') -> (s'', (s''', x'))))
   slide = Diff (\(s, (s', x)) -> ((s', (s, x)), \(s'', (s''', x')) -> (s''', (s'', x'))))
 
--- | Cocartesian channel plumbing for 'Diff'.
-instance Channel Either (Diff' p) where
+-- | Cocartesian channel plumbing for 'Diff.
+instance Channel Either (Diff p) where
   assoc =
     Diff
       ( \case
@@ -125,15 +122,15 @@ instance Channel Either (Diff' p) where
           Right (Right c) -> (Right (Right c), \case Right (Right dc) -> Right (Right dc); _ -> error "slide")
       )
 
--- | Cartesian tensorial strength for 'Diff'.
-instance Strength (,) (Diff' p) where
+-- | Cartesian tensorial strength for 'Diff.
+instance Strength (,) (Diff p) where
   strength (Diff f) = Diff $ \(a, b) ->
     let (c, back) = f b
      in ((a, c), \(da, dc) -> (da, back dc))
   {-# INLINE strength #-}
 
--- | Cocartesian tensorial strength for 'Diff'.
-instance Strength Either (Diff' p) where
+-- | Cocartesian tensorial strength for 'Diff.
+instance Strength Either (Diff p) where
   strength (Diff f) = Diff $ \case
     Left a -> (Left a, \case Left da -> Left da; Right _ -> error "strength: Left input, Right cotangent")
     Right b ->
@@ -141,7 +138,7 @@ instance Strength Either (Diff' p) where
        in (Right c, \case Right dc -> Right (back dc); Left _ -> error "strength: Right input, Left cotangent")
   {-# INLINE strength #-}
 
--- | Trace for 'Diff' with the 'Either' tensor.
+-- | Trace for 'Diff with the 'Either' tensor.
 --
 -- The 'Either' trace is a while-loop: 'Left a' means "iterate again",
 -- 'Right c' means "return".  Forward pass runs until the body produces a
@@ -160,7 +157,7 @@ instance Strength Either (Diff' p) where
 -- is in.  Every honest pullback maps an output-tagged cotangent to an
 -- input-tagged one; the replay errors loudly on any mismatch rather
 -- than misreading a dishonest primitive.
-instance Traced Either (Diff' p) where
+instance Traced Either (Diff p) where
   trace (Diff body) = Diff $ \b ->
     let -- Forward: iterate, collecting pullbacks in execution order.
         goFwd x =
@@ -206,40 +203,40 @@ instance Traced Either (Diff' p) where
 --
 -- >>> import Circuit.Tensor (Action(..))
 -- >>> import Circuit.Dagger (Copy(..), Merge(..))
--- >>> let (_, pb) = runDiff (copy :: Diff Int (Int, Int)) 5
+-- >>> let (_, pb) = runDiff (copy :: Diff' Int (Int, Int)) 5
 -- >>> pb (1, 2)
 -- 3
-instance (Merge (->) a) => Copy (Diff' p) a where
+instance (Merge (->) a) => Copy (Diff p) a where
   copy = Diff (\a -> ((a, a), CD.plus))
   {-# INLINE copy #-}
 
-instance (Zero (->) a) => Discard (Diff' p) a where
+instance (Zero (->) a) => Discard (Diff p) a where
   discard = Diff (const ((), \() -> CD.zero ()))
   {-# INLINE discard #-}
 
 -- | Add in D: the pullback is 'copy' (fan-out on the backward pass).
 --
--- >>> let (_, pb) = runDiff (plus :: Diff (Int, Int) Int) (3, 4)
+-- >>> let (_, pb) = runDiff (plus :: Diff' (Int, Int) Int) (3, 4)
 -- >>> pb 1
 -- (1,1)
-instance (Merge (->) a) => Merge (Diff' p) a where
+instance (Merge (->) a) => Merge (Diff p) a where
   plus = Diff (\(a, b) -> (CD.plus (a, b), \d -> (d, d)))
   {-# INLINE plus #-}
 
-instance (Zero (->) a) => Zero (Diff' p) a where
+instance (Zero (->) a) => Zero (Diff p) a where
   zero = Diff (\() -> (CD.zero (), const ()))
   {-# INLINE zero #-}
 
 -- | Monoidal product for Diff: independent wires, no additive constraint.
 --
--- >>> let f = Diff (\x -> (x + 1, \d -> d)) :: Diff Int Int
--- >>> let g = Diff (\x -> (x * 2, \d -> 2 * d)) :: Diff Int Int
+-- >>> let f = Diff (\x -> (x + 1, \d -> d)) :: Diff' Int Int
+-- >>> let g = Diff (\x -> (x * 2, \d -> 2 * d)) :: Diff' Int Int
 -- >>> let (y, pb) = runDiff (par f g) (3, 4)
 -- >>> y
 -- (4,8)
 -- >>> pb (1, 1)
 -- (1,2)
-instance Tensor (,) (Diff' p) where
+instance Tensor (,) (Diff p) where
   par (Diff f) (Diff g) = Diff $ \(a, c) ->
     let (b, fb) = f a; (d, gd) = g c
      in ((b, d), Data.Bifunctor.bimap fb gd)
@@ -253,7 +250,7 @@ instance Tensor (,) (Diff' p) where
   unitr' = Diff (\a -> ((a, ()), \(da, ()) -> da))
   {-# INLINE unitr' #-}
 
-instance Action (,) (Diff' p) where
+instance Action (,) (Diff p) where
   swap = Diff (\(a, b) -> ((b, a), \(db, da) -> (da, db)))
   {-# INLINE swap #-}
 
@@ -308,7 +305,7 @@ instance Action (,) (Diff' p) where
 -- @Circuit.Diff.Star@ — the Schur-complement bridge proper.
 --
 -- __Proof obligation__: the probes assume the pullback is linear.
--- Every honestly-constructed 'Diff' primitive satisfies this (a
+-- Every honestly-constructed 'Diff primitive satisfies this (a
 -- pullback /is/ a linear map); a primitive whose backward closure is
 -- affine-with-offset is a bug that this function will silently
 -- misread.
@@ -318,8 +315,8 @@ traceStarFrom ::
   j ->
   -- | forward iteration count
   Int ->
-  Diff' p (j, b) (j, c) ->
-  Diff' p b c
+  Diff p (j, b) (j, c) ->
+  Diff p b c
 traceStarFrom x0 n (Diff body) = Diff $ \b ->
   let -- Forward: iterate from caller-supplied seed (as 'traceNFrom')
       stepFwd x = let ((x', _), _) = body (x, b) in x'
@@ -340,14 +337,14 @@ traceStarFrom x0 n (Diff body) = Diff $ \b ->
 --
 -- > traceStar f = D + B · star A · C
 --
--- The lazy 'trace' instance for 'Diff' computes exactly this via a
+-- The lazy 'trace' instance for 'Diff computes exactly this via a
 -- lazy fixpoint rather than closed form, so this alias is definable
 -- without using 'NHR.star' at all.  Note that @numhask@ ships no
 -- 'NHR.StarSemiring' instances, so for concrete carriers prefer
 -- 'traceStarFrom' (scalar channel, closed-form backward) or
 -- @Circuit.Diff.Star.traceStarMatrix@ (vector channel, solved by
 -- 'Circuit.Mat.Dense.starMatrix' — the bridge made literal).
-traceStar :: Diff' p (j, b) (j, c) -> Diff' p b c
+traceStar :: Diff p (j, b) (j, c) -> Diff p b c
 traceStar = trace
 
 -- | Iterated trace for strict carriers.
@@ -372,8 +369,8 @@ traceNFrom ::
   (MergeZero (->) a) =>
   a ->
   Int ->
-  Diff' p (a, b) (a, c) ->
-  Diff' p b c
+  Diff p (a, b) (a, c) ->
+  Diff p b c
 traceNFrom x0 n (Diff body) = Diff $ \b ->
   let -- Forward: iterate from caller-supplied seed
       stepFwd x = let ((x', _), _) = body (x, b) in x'
@@ -400,7 +397,7 @@ traceNFrom x0 n (Diff body) = Diff $ \b ->
 -- 10.0
 -- >>> pb 1.0
 -- 7.0
-quadD :: Diff' p Double Double
+quadD :: Diff p Double Double
 quadD = CD.plus . par sq lin . CD.copy
   where
     sq = Diff (\x -> (2 * x * x, \d -> 4 * x * d))

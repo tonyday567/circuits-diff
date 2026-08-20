@@ -1,4 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
 
 -- | Kepler's equation as a fixed-point knot.
@@ -9,14 +8,14 @@
 -- > E = M + e · sin E
 --
 -- Solving for @E@ is a scalar fixed-point problem.  The 'Trace' instance for
--- 'Diff' ties exactly this knot, and 'traceStarFromD' solves the backward
+-- 'Diff ties exactly this knot, and 'traceStarFromD' solves the backward
 -- affine equation in closed form via @(I − h·Df)⁻¹@.
 module Kepler
   ( runKeplerTests,
   )
 where
 
-import Circuit.Diff.Circuit (Diff, runDiff, traceNFrom, pattern Diff)
+import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
 import Circuit.Diff.Star (traceStarFromD)
 import NumHask.Prelude
 import Prelude ()
@@ -25,7 +24,7 @@ import Prelude ()
 --
 -- Channel carries the current eccentric anomaly @E@; input is @(M, e)@;
 -- output is the updated @E@.
-keplerBody :: Diff (Double, (Double, Double)) (Double, Double)
+keplerBody :: Diff' (Double, (Double, Double)) (Double, Double)
 keplerBody = Diff $ \(eChan, (m, ecc)) ->
   let e' = m + ecc * sin eChan
       deDeChan = ecc * cos eChan
@@ -41,11 +40,11 @@ keplerBody = Diff $ \(eChan, (m, ecc)) ->
 --
 -- For @e < 1@ the channel self-coupling @e·cos E@ has magnitude less than one,
 -- so the Neumann series / star exists.
-solveKeplerStar :: Int -> Diff (Double, Double) Double
+solveKeplerStar :: Int -> Diff' (Double, Double) Double
 solveKeplerStar n = traceStarFromD 0.0 n keplerBody
 
 -- | Solve Kepler's equation using truncated fixed-point iteration.
-solveKeplerN :: Int -> Diff (Double, Double) Double
+solveKeplerN :: Int -> Diff' (Double, Double) Double
 solveKeplerN n = traceNFrom 0.0 n keplerBody
 
 -- | Direct Newton solver, used as an oracle.

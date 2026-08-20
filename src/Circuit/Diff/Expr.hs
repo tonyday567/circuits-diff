@@ -1,5 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
-
 -- | A deep embedding of scalar smooth expressions.
 --
 -- NumHask's free-algebra tower stops at 'Ring' because division has a
@@ -13,7 +11,7 @@
 -- This module provides that deep embedding for one scalar variable,
 -- including the field and trigonometric operations needed for real AD.
 -- Interpretations are provided into 'Double', 'Circuit.Diff.Jet' (exact
--- Taylor towers), and 'Circuit.Diff.Diff'' (exact reverse mode).
+-- Taylor towers), and 'Circuit.Diff.Diff' (exact reverse mode).
 module Circuit.Diff.Expr
   ( -- * Expression syntax
     Expr (..),
@@ -31,7 +29,7 @@ module Circuit.Diff.Expr
   )
 where
 
-import Circuit.Diff (Diff', pattern Diff)
+import Circuit.Diff (Diff (..))
 import Circuit.Diff.Jet (Jet (..), constant, taylor, variable)
 import NumHask.Algebra.Additive qualified as NA
 import NumHask.Algebra.Field qualified as NF
@@ -148,8 +146,8 @@ derivativeExpr (LogE u) = MulE (RecipE u) (derivativeExpr u)
 derivativeExpr (SinE u) = MulE (CosE u) (derivativeExpr u)
 derivativeExpr (CosE u) = NegE (MulE (SinE u) (derivativeExpr u))
 
--- | Exact reverse-mode 'Diff'' from an expression.
-diffExpr :: Expr -> Diff' p Double Double
+-- | Exact reverse-mode 'Diff' from an expression.
+diffExpr :: Expr -> Diff p Double Double
 diffExpr e =
   Diff $ \x ->
     let y = evalDouble x e

@@ -110,7 +110,7 @@ runDubinsChase = do
   printf "grad_0=%.6f  re-FD=%.6f\n" dir dirFD
   assertNear "FD self-consistency on u0" 5e-2 dir dirFD
 
-  putStrLn "=== dubins-chase deck 1b: Diff' / DiffP reverse mode ==="
+  putStrLn "=== dubins-chase deck 1b: Diff / DiffP reverse mode ==="
   -- Same scene: reverse-mode on the polymorphic loss must match FD.
   -- Interior controls (zeros) so clamp kink is off the table.
   let gDiff = gradU_Diff p dt us0 phis wChase
@@ -126,8 +126,8 @@ runDubinsChase = do
     (maximum (map abs g))
     maxAbsDiff
     maxAbsDiffP
-  assertTrue "Diff' matches FD (inf-norm)" (maxAbsDiff < 1e-4)
-  assertTrue "DiffP matches Diff' (inf-norm)" (maxAbsDiffP < 1e-12)
+  assertTrue "Diff matches FD (inf-norm)" (maxAbsDiff < 1e-4)
+  assertTrue "DiffP matches Diff (inf-norm)" (maxAbsDiffP < 1e-12)
   -- Forward value of reverse-mode loss agrees with Double path.
   let (lossRM, _) = runDiff (lossAsDiff p dt 0 us0 phis wChase) 0
   assertNear "lossAsDiff value = lossOfControls" 1e-12 lossRM loss0
