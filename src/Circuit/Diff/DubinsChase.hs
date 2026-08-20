@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE StrictData #-}
 
 -- | Dubins chase — pursuit–evasion as a circuits-diff consumer
@@ -17,7 +16,7 @@
 -- * __1__ — soft-capture loss through the rollout; finite-difference gradients
 --   w.r.t. pursuer controls (evader open-loop fixed).
 -- * __1b__ — same dynamics\/loss written once polymorphic in a 'Lit' carrier;
---   reverse-mode gradients via 'Diff'' (and 'DiffP' via 'toParam'); match FD.
+--   reverse-mode gradients via 'Diff' (and 'DiffP' via 'toParam'); match FD.
 -- * __2__ — open-loop optimizers (projected GD + backtracking) and hard-capture
 --   scoring; public param sweeps.
 --
@@ -92,7 +91,8 @@ module Circuit.Diff.DubinsChase
   )
 where
 
-import Circuit.Diff (Diff', runDiff, pattern Diff)
+import Circuit.Diff (Diff (..), runDiff)
+import Circuit.Diff.Carrier (Lit (..))
 import Circuit.Diff.Param (DiffP (..), toParam)
 import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Field qualified as NHF
@@ -139,21 +139,6 @@ clampU u = max (-1) (min 1 u)
 -- Deck 1b — polymorphic carrier (Daisyworld lesson)
 ----------------------------------------------------------------------
 
--- | Lift a numeric literal into the active carrier.
---
--- @
--- instance Lit Double where lit = id
--- instance Lit (Diff' p Double Double) where lit c = Diff (const (c, const 0))
--- @
-class Lit a where
-  lit :: Double -> a
-
-instance Lit Double where
-  lit = id
-
-instance Lit (Diff' p Double Double) where
-  lit c = Diff (const (c, const 0))
-
 -- | Rectified linear for soft capture.  Smooth almost everywhere; kink only
 -- on the capture boundary (same as the Double 'max' in deck 1).
 class SoftRelu a where
@@ -164,7 +149,7 @@ instance SoftRelu Double where
 
 -- | Reverse-mode ReLU: forward uses the primal value; pullback is the
 -- indicator of the positive half-line.
-instance SoftRelu (Diff' p Double Double) where
+instance SoftRelu (Diff p Double Double) where
   softRelu (Diff f) = Diff $ \s ->
     let (y, pb) = f s
      in if y > 0
@@ -353,12 +338,12 @@ descendU p dt eps eta us phis w0 =
    in zipWith (\u gi -> clampU (u - eta * gi)) us g
 
 ----------------------------------------------------------------------
--- Deck 1b — reverse-mode gradients (Diff' + DiffP)
+-- Deck 1b — reverse-mode gradients (Diff + DiffP)
 ----------------------------------------------------------------------
 
--- | Path-mean soft loss as a 'Diff'' in one pursuer control \(u_i\).
+-- | Path-mean soft loss as a 'Diff' in one pursuer control \(u_i\).
 --
--- Control \(u_i\) is the independent variable ('Diff' @(,id)@); all other
+-- Control \(u_i\) is the independent variable ('Diff @(,id)@); all other
 -- controls, headings, time step, and the initial world are 'lit' constants.
 -- Same polymorphic RHS as simulation — Daisyworld lesson.
 lossAsDiff ::
@@ -368,7 +353,7 @@ lossAsDiff ::
   [Double] ->
   [Double] ->
   World ->
-  Diff' TagDubins Double Double
+  Diff TagDubins Double Double
 lossAsDiff p dt i us phis w0 =
   let usD =
         [ if j == i
@@ -394,7 +379,7 @@ gradU_Diff p dt us phis w0 =
 
 -- | Same single-control loss as 'DiffP ()' via 'toParam'.
 --
--- Shows the DiffP carrier on the identical 'Diff'' computation — not a second
+-- Shows the DiffP carrier on the identical 'Diff' computation — not a second
 -- hand-written physics.
 lossDiffP ::
   Params ->
@@ -407,9 +392,9 @@ lossDiffP ::
 lossDiffP p dt i us phis w0 =
   toParam (lossAsDiff p dt i us phis w0)
 
--- | Reverse-mode gradient via 'DiffP' ('toParam' of 'lossAsDiff').
+-- | Reverse-mode gradient via 'DiffP' ('toParam' of 'lossAsDiff).
 --
--- Must match 'gradU_Diff' (same pullback, different wrapper).
+-- Must match 'gradU_Diff (same pullback, different wrapper).
 gradU_DiffP :: Params -> Double -> [Double] -> [Double] -> World -> [Double]
 gradU_DiffP p dt us phis w0 =
   [ let (_, pb) = runDiffP (lossDiffP p dt i us phis w0) () (clampU (us !! i))
