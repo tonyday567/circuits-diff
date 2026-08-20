@@ -6,7 +6,7 @@ where
 
 import Circuit.Diff.Backprop (linearizeAt)
 import Circuit.Diff.Circuit (Diff (..))
-import Circuit.Diff.Eliminate (eliminateKnots)
+import Circuit.Diff.Eliminate (eliminateKnots, fieldStarEvidence, listEvidence)
 import Circuit.Diff.Pullback (Pullback (..), evalPullback)
 import Circuit.Net (Net (..))
 import NumHask.Algebra.Additive qualified as NHA
@@ -32,6 +32,7 @@ assert name got expected =
 scalarKnot :: Net (,) (,) Pullback FieldStar FieldStar
 scalarKnot =
   Knot
+    fieldStarEvidence
     ( Lift
         ( Pullback $ \(FieldStar dx, FieldStar dc) ->
             (FieldStar (0.5 * dx + dc), FieldStar (dx + 2.0 * dc))
@@ -41,7 +42,7 @@ scalarKnot =
 runStarEliminateTests :: IO ()
 runStarEliminateTests = do
   putStrLn "Star-eliminate scalar pullback knot"
-  let eliminated = eliminateKnots (FieldStar 0) scalarKnot
+  let eliminated = eliminateKnots scalarKnot
       FieldStar g1 = evalPullback eliminated (FieldStar 1.0)
       FieldStar g3 = evalPullback eliminated (FieldStar 3.0)
   assert "eliminated scalar gradient" g1 4.0
@@ -68,8 +69,8 @@ runStarEliminateTests = do
                 FieldStar (dx1 + dx2 + dc)
               ) ::
                 ([FieldStar], FieldStar)
-      vecKnot = Knot (Lift vecBody) :: Net (,) (,) Pullback FieldStar FieldStar
-      eliminatedVec = eliminateKnots [FieldStar 0, FieldStar 0] vecKnot
+      vecKnot = Knot (listEvidence 2) (Lift vecBody) :: Net (,) (,) Pullback FieldStar FieldStar
+      eliminatedVec = eliminateKnots vecKnot
       FieldStar gVec = evalPullback eliminatedVec (FieldStar 1.0)
       expectedVec = (30.0 / 11.0) + (40.0 / 11.0) + 1.0
   assert "eliminated vector gradient" gVec expectedVec
@@ -78,14 +79,14 @@ runStarEliminateTests = do
   let copiedKnot =
         Compose Plus (Compose (Par scalarKnot scalarKnot) Copy) ::
           Net (,) (,) Pullback FieldStar FieldStar
-      eliminatedCopy = eliminateKnots (FieldStar 0) copiedKnot
+      eliminatedCopy = eliminateKnots copiedKnot
       FieldStar gCopy = evalPullback eliminatedCopy (FieldStar 1.0)
   assert "melted copy-add around knot" gCopy 8.0
 
   putStrLn "Star-eliminate via composition"
   let scale3 = Lift (Pullback (\(FieldStar x) -> FieldStar (3.0 * x)))
       nested = Compose scale3 scalarKnot :: Net (,) (,) Pullback FieldStar FieldStar
-      eliminatedNested = eliminateKnots (FieldStar 0) nested
+      eliminatedNested = eliminateKnots nested
       FieldStar gNested = evalPullback eliminatedNested (FieldStar 1.0)
   assert "composition" gNested 12.0
 
@@ -102,9 +103,9 @@ runStarEliminateTests = do
               )
           ) ::
           Diff () (FieldStar, FieldStar) (FieldStar, FieldStar)
-      innerKnot = Knot (Lift innerBody) :: Net (,) (,) (Diff ()) FieldStar FieldStar
+      innerKnot = Knot fieldStarEvidence (Lift innerBody) :: Net (,) (,) (Diff ()) FieldStar FieldStar
       (FieldStar y, g) = linearizeAt innerKnot (FieldStar 4.0)
-      gElim = eliminateKnots (FieldStar 0) g
+      gElim = eliminateKnots g
       FieldStar gLazy = evalPullback g (FieldStar 1.0)
       FieldStar gElimVal = evalPullback gElim (FieldStar 1.0)
   assert "lazy-knot value" y 4.0

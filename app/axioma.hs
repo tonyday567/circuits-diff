@@ -8,7 +8,7 @@ import Circuit.Channel (Traced (..))
 import Circuit.Diff.Backprop (linearizeAt)
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
 import Circuit.Diff.Pullback (evalPullback)
-import Circuit.Net (Net (..))
+import Circuit.Net (ChannelEvidence (..), Net (..))
 import Curvature (runCurvatureTests)
 import DiffCarrierTests (runDiffCarrierTests)
 import DubinsChase (runDubinsChase)
@@ -117,7 +117,7 @@ main = do
               ((0.0, x + 2.0 * b), \(_, dc) -> (dc, 2.0 * dc))
           ) ::
           Diff' (Double, Double) (Double, Double)
-      innerKnot = Knot (Lift innerBody) :: Net (,) (,) Diff' Double Double
+      innerKnot = Knot NoEvidence (Lift innerBody) :: Net (,) (,) Diff' Double Double
       net = Par (Lift sq) innerKnot :: Net (,) (,) Diff' (Double, Double) (Double, Double)
       (y7, g7) = linearizeAt net (3.0, 4.0)
       (gx, gb) = evalPullback g7 (1.0, 1.0)
