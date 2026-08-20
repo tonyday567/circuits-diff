@@ -4,7 +4,7 @@
 
 -- | Star-elimination of @(,)@ knots in linear 'Pullback' nets.
 --
--- A 'Net (,) (,) Pullback' built by 'Circuit.Diff.Backprop.linearizeNet' is linear by
+-- A 'Net (,) (,) Pullback' built by 'Circuit.Diff.Backprop.linearizeAt' is linear by
 -- construction: every 'Lift' is a pointwise pullback, every 'Compose' is
 -- function composition, and every 'Trace' ties an affine feedback equation.
 -- This module eliminates those knots in closed form using the Kleene star
@@ -22,13 +22,16 @@ module Circuit.Diff.Eliminate
   ( -- * Channel abstraction
     StarChannel (..),
 
+    -- * Structural melting
+    melt,
+
     -- * Trace elimination
     eliminateKnots,
   )
 where
 
+import Circuit.Dagger (CopyT (..), DiscardT (..), MergeT (..), ZeroT (..))
 import Circuit.Dagger qualified
-import Circuit.Diff.Melt (melt)
 import Circuit.Diff.Pullback (Pullback (..))
 import Circuit.Layer (run)
 import Circuit.Mat.Dense (Matrix (..), fromLists, matVec, starMatrix, toLists)
@@ -46,6 +49,31 @@ import Prelude qualified as P
 -- >>> import Circuit.Net (Net (..))
 -- >>> import NumHask.Free.Carriers (FieldStar (..))
 -- >>> import Prelude hiding (id, (.))
+
+-- | Replace every structural row with its pure 'Pullback' interpretation.
+--
+-- 'Circuit.Net.melt' melts bimonoid rows ('Copy', 'Discard', 'Plus',
+-- 'Zero') by /running/ the net.  That is fine for knot-free wiring, but it
+-- eagerly ties any lazy 'Trace' encountered along the way — so a net with
+-- non-zero channel self-coupling diverges before a subsequent star-elimination
+-- pass can save it.
+--
+-- This pass performs the same row elimination /without/ running anything.
+-- Each structural row is replaced by the corresponding 'Pullback' arrow,
+-- lifted into a 'Net' node.  The result is semantically equivalent but
+-- contains only 'Lift', 'Compose', 'Swap', 'Par' and 'Knot' constructors.
+-- After melting, 'eliminateKnots' can remove the knots in closed form.
+melt :: Net (,) (,) Pullback a b -> Net (,) (,) Pullback a b
+melt = \case
+  Lift p -> Lift p
+  Compose g f -> Compose (melt g) (melt f)
+  Par f g -> Par (melt f) (melt g)
+  Swap -> Swap
+  Knot f -> Knot (melt f)
+  Copy -> Lift copyT
+  Discard -> Lift (discardT @(,))
+  Plus -> Lift plusT
+  Zero -> Lift (zeroT @(,))
 
 -- | Feedback channels that support star-elimination.
 --
@@ -130,7 +158,7 @@ instance
 
 -- | 'FieldStar' as a numeric carrier for circuits' additive structure, so
 -- hand-built nets can use structural rows at 'FieldStar' types.  (Nets from
--- 'Circuit.Diff.Backprop.linearizeNet' never need this — their structural rows are
+-- 'Circuit.Diff.Backprop.linearizeAt' never need this — their structural rows are
 -- already 'Lift's.)  Deliberately orphan: this module is the federation
 -- seam between @circuits@ and @numhask-free@.
 instance Circuit.Dagger.Merge (->) FieldStar where
@@ -169,7 +197,7 @@ solveAffine dim body dc =
 
 -- | Eliminate all @(,)@ knots in a linear pullback net, structurally.
 --
--- Structural rows are melted first ('Circuit.Diff.Melt.melt'); then the
+-- Structural rows are melted first ('melt'); then the
 -- recursion replaces each 'Trace' — innermost first, so a knot body handed
 -- to 'solveAffine' is already loop-free and can be evaluated by plain
 -- 'run' — with one solved 'Lift'.  Everything else keeps its shape.
@@ -180,7 +208,7 @@ solveAffine dim body dc =
 --
 -- __Precondition (caller-checked, not machine-checked)__: every knot in the
 -- net has channel type @j@ with the witness's dimension.  This holds for
--- single-loop nets from 'Circuit.Diff.Backprop.linearizeNet' over a @j@ channel; it is
+-- single-loop nets from 'Circuit.Diff.Backprop.linearizeAt' over a @j@ channel; it is
 -- /not/ guaranteed for arbitrary nets — distinct knots may close over
 -- distinct channel types, and a mismatched coercion is undefined behaviour.
 -- The principled fix is evidence on the row: a 'StarChannel' dictionary
