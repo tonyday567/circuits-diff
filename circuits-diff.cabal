@@ -68,7 +68,6 @@ library
     Circuit.Diff.RDC
     Circuit.Diff.Star
     Circuit.Diff.Taylor
-    Circuit.Diff.Expr
     Circuit.Diff.Tensor
 
   build-depends:

@@ -32,16 +32,10 @@ module Circuit.Diff.Operators
     -- * Exact higher-order towers (compositional Jet)
     derivativeNJ,
     taylorJ,
-
-    -- * Exact AD from a deep expression embedding
-    derivativeNExpr,
-    taylorExpr,
-    diffExpr,
   )
 where
 
 import Circuit.Diff (Diff (..), runDiff)
-import Circuit.Diff.Expr (Expr, derivativeNExpr, diffExpr, taylorExpr)
 import Circuit.Diff.Jet (Jet)
 import Circuit.Diff.Jet qualified as Jet
 import Circuit.Diff.Taylor (Taylor, approxTaylorFromDiff, evalTaylor)
