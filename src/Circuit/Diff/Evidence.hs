@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeFamilies #-}
+
 -- | Star-elimination evidence as a channel type.
 --
 -- The insight is that star-elimination structure is /data carried on a wire/,
@@ -9,8 +11,6 @@
 -- dictionary needed to solve affine feedback equations over that state.  The
 -- dictionary part of the value is carried through the trace unchanged; the
 -- data part is updated by the knot body.
-{-# LANGUAGE TypeFamilies #-}
-
 module Circuit.Diff.Evidence
   ( -- * Evidence-carrying channel
     StarChannel (..),
