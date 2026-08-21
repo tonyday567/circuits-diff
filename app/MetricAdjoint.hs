@@ -25,8 +25,6 @@ where
 import Circuit.Diff.Chart
   ( christoffel2D,
     covariantDerivative,
-    polarMetricLower,
-    polarMetricRaise,
   )
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff)
 import Circuit.Diff.Metric (adjointWith)
@@ -180,35 +178,3 @@ runMetricAdjointTests = do
   let eTheta = Diff $ const ((0, 1), const (0, 0))
       nablaThetaTheta = covariantDerivative lowerPolar raisePolar eTheta (r, theta) basis1
   assertV2 "∇_θ e_θ" nablaThetaTheta (negate r, 0)
-
-  putStrLn "chart-derived polar metric matches hand-coded metric"
-  let vec = (1.5, negate 0.75)
-      (vLoweredHand, _) = runDiff lowerPolar ((r, theta), vec)
-      (vLoweredChart, _) = runDiff polarMetricLower ((r, theta), vec)
-  assertV2 "chart lower = hand-coded lower" vLoweredChart vLoweredHand
-  let (vRaisedHand, _) = runDiff raisePolar ((r, theta), vLoweredHand)
-      (vRaisedChart, _) = runDiff polarMetricRaise ((r, theta), vLoweredHand)
-  assertV2 "chart raise = hand-coded raise" vRaisedChart vRaisedHand
-
-  putStrLn "chart-derived polar metric adjoint matches analytic gradient"
-  let (_, pbChart) = runDiff (adjointWith polarMetricRaise euclidean1D fPolar) (r, theta)
-      chartGrad = pbChart 1.0
-  assertV2 "chart polar gradient matches analytic" chartGrad expectedPolar
-
-  putStrLn "chart-derived Christoffel symbols match polar connection"
-  let (c000, c001, c010, c011, c100, c101, c110, c111) =
-        christoffel2D polarMetricLower polarMetricRaise (r, theta)
-  assert "chart Γ^r_{rr}" c000 0
-  assert "chart Γ^r_{rθ}" c001 0
-  assert "chart Γ^r_{θr}" c010 0
-  assert "chart Γ^r_{θθ}" c011 (negate r)
-  assert "chart Γ^θ_{rr}" c100 0
-  assert "chart Γ^θ_{rθ}" c101 (recip r)
-  assert "chart Γ^θ_{θr}" c110 (recip r)
-  assert "chart Γ^θ_{θθ}" c111 0
-
-  putStrLn "chart-derived covariant derivative matches polar connection"
-  let nablaThetaERChart = covariantDerivative polarMetricLower polarMetricRaise eR (r, theta) basis1
-  assertV2 "chart ∇_θ e_r" nablaThetaERChart (0, recip r)
-  let nablaThetaThetaChart = covariantDerivative polarMetricLower polarMetricRaise eTheta (r, theta) basis1
-  assertV2 "chart ∇_θ e_θ" nablaThetaThetaChart (negate r, 0)

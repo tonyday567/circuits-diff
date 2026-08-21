@@ -9,10 +9,7 @@ import Circuit.Diff.Backprop (linearizeAt)
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
 import Circuit.Diff.Pullback (evalPullback)
 import Circuit.Net (ChannelEvidence (..), Net (..))
-import Curvature (runCurvatureTests)
 import DiffCarrierTests (runDiffCarrierTests)
-import DubinsChase (runDubinsChase)
-import GeodesicFlow (runGeodesicFlowTests)
 import Kepler (runKeplerTests)
 import MatrixStar (runMatrixStarTests)
 import MetricAdjoint (runMetricAdjointTests)
@@ -132,10 +129,7 @@ main = do
   runTagTests
   runMetricAdjointTests
   runKeplerTests
-  runGeodesicFlowTests
-  runCurvatureTests
   runDiffCarrierTests
-  runDubinsChase
   runOperatorTests
   runStreamTowerTests
   runTensorTests

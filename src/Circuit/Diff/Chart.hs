@@ -7,14 +7,9 @@
 -- and compute Christoffel symbols / covariant derivatives — the standard
 -- differential-geometry pipeline, using the 'Diff' pullback as the Jacobian.
 module Circuit.Diff.Chart
-  ( -- * Chart as a differentiable map
-    polarChartDiff,
-
-    -- * Induced metric
+  ( -- * Induced metric
     inducedMetric2D,
     raise2D,
-    polarMetricLower,
-    polarMetricRaise,
 
     -- * Levi-Civita connection from a 2D metric
     partialG,
@@ -66,35 +61,6 @@ raise2D (Diff lower) = Diff $ \(x, c) ->
       v1 = inv00 * fst c + inv01 * snd c
       v2 = inv10 * fst c + inv11 * snd c
    in ((v1, v2), const ((zero, zero), (zero, zero)))
-
--- | Polar coordinates @(r, θ)@ to cartesian @(x, y)@ as a 'Diff.
-polarChartDiff :: (TrigField a) => Diff' (a, a) (a, a)
-polarChartDiff = Diff $ \(r, theta) ->
-  let c = cos theta
-      s = sin theta
-      x = r * c
-      y = r * s
-   in ( (x, y),
-        \(dx, dy) -> (dx * c + dy * s, r * (dy * c - dx * s))
-      )
-
--- | Polar coordinate metric @g = diag(1, r²)@ derived from 'polarChartDiff.
---
--- The pullback is honest: it carries @∂g@ in the point-slot so that
--- 'christoffel2D' can recover the Levi-Civita connection.
-polarMetricLower :: (TrigField a) => Diff' ((a, a), (a, a)) (a, a)
-polarMetricLower = Diff $ \((r, _), (vr, vtheta)) ->
-  let tw = one + one
-   in ( (vr, r * r * vtheta),
-        \(dcr, dctheta) ->
-          ( (tw * r * vtheta * dctheta, zero),
-            (dcr, r * r * dctheta)
-          )
-      )
-
--- | Polar coordinate inverse metric @g⁻¹ = diag(1, 1/r²)@.
-polarMetricRaise :: (TrigField a) => Diff' ((a, a), (a, a)) (a, a)
-polarMetricRaise = raise2D polarMetricLower
 
 -- | Basis vectors in ℝ².
 basis0 :: (Additive a, Multiplicative a) => (a, a)

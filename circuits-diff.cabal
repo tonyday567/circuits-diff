@@ -54,8 +54,6 @@ library
     Circuit.Diff.Chart
     Circuit.Diff.Circuit
     Circuit.Diff.Curvature
-    Circuit.Diff.Curvature.Surface
-    Circuit.Diff.DubinsChase
     Circuit.Diff.Eliminate
     Circuit.Diff.Inverse
     Circuit.Diff.Jacobian
@@ -83,10 +81,7 @@ executable circuits-diff-axioma
   main-is: axioma.hs
   hs-source-dirs: app
   other-modules:
-    Curvature
     DiffCarrierTests
-    DubinsChase
-    GeodesicFlow
     Kepler
     MatrixStar
     MetricAdjoint

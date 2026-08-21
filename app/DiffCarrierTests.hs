@@ -6,7 +6,6 @@ module DiffCarrierTests
 where
 
 import Circuit.Diff (Diff)
-import Circuit.Diff.Curvature.Surface (surfaceOfRevolutionK)
 import Circuit.Diff.Inverse (constDiff, implicit1N, inverseN, varDiff)
 import Circuit.Diff.Jet (taylor)
 import Circuit.Diff.RDC
@@ -136,10 +135,3 @@ runDiffCarrierTests = do
     let f :: (ExpField a, TrigField a) => (a, a) -> a
         f (u, v) = u * u * v + NHField.sin (u * v)
      in rdcMixedPartials eps f (0.7 :: Double, 1.2 :: Double)
-
-  putStrLn "Curvature oracle tests"
-
-  assert "S² Gaussian curvature = 1" $
-    let profile z = NHField.sqrt (one - z * z)
-        k = surfaceOfRevolutionK profile (0.0 :: Double)
-     in abs (k P.- 1.0) < 1e-10
