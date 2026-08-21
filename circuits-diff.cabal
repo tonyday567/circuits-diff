@@ -93,6 +93,7 @@ executable circuits-diff-axioma
     MetricAdjoint
     Operators
     StarEliminate
+    StreamTower
     Tags
     Tensor
   build-depends:

@@ -19,6 +19,7 @@ import MetricAdjoint (runMetricAdjointTests)
 import NumHask.Prelude
 import Operators (runOperatorTests)
 import StarEliminate (runStarEliminateTests)
+import StreamTower (runStreamTowerTests)
 import System.Exit (exitFailure)
 import Tags (runTagTests)
 import Tensor (runTensorTests)
@@ -136,4 +137,5 @@ main = do
   runDiffCarrierTests
   runDubinsChase
   runOperatorTests
+  runStreamTowerTests
   runTensorTests
