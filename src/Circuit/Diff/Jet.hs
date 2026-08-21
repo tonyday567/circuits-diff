@@ -37,6 +37,7 @@ module Circuit.Diff.Jet
 where
 
 import Circuit.Diff (Diff, runDiff)
+import Circuit.Process qualified as CP (Process (..), scan)
 import NumHask.Algebra.Additive (Additive (..), Subtractive (..), sum)
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..))
@@ -131,26 +132,46 @@ instance (Additive a, Multiplicative a) => Multiplicative (Jet a) where
         cauchy k = sum [xs P.!! i * ys P.!! (k - i) | i <- [0 .. k]]
      in Jet [cauchy k | k <- [0 .. n - 1]]
 
--- | Reciprocal series via long division.
+-- | Tail process for the reciprocal series.
 --
 -- If @u = u0 + u1*h + ...@ and @v = 1/u = v0 + v1*h + ...@ then
 -- @v0 = 1/u0@ and @vk = -(sum_{i=1}^k ui * v{k-i}) / u0@.
+-- The process consumes @u1, u2, ...@ and emits @v1, v2, ...@; the caller
+-- prepends @v0@.
+recipTailProcess ::
+  (Subtractive a, Divisive a) =>
+  a ->
+  CP.Process a a
+recipTailProcess u0 =
+  CP.Process inject step extract
+  where
+    v0 = recip u0
+    inject u = step ([v0], []) u
+    step (vs, us) u =
+      let k = P.length vs
+          us' = us ++ [u]
+          vk = negate (sum [us' P.!! (i - 1) * vs P.!! (k - i) | i <- [1 .. k]]) / u0
+       in (vs ++ [vk], us')
+    extract (vs, _) = P.last vs
+
+-- | Reciprocal series as a coinductive stream.
+--
+-- @recipSeries u0 us@ produces @[v0, v1, ...]@ for @us = [u1, u2, ...]@.
+-- The output length is one more than the input length, so truncation is
+-- decided by the caller.
 recipSeries ::
   (Subtractive a, Divisive a) =>
+  a ->
   [a] ->
   [a]
-recipSeries [] = []
-recipSeries (u0 : us) =
-  let vs = P.map go [0 ..]
-      go 0 = recip u0
-      go k = negate (sum [us P.!! (i - 1) * vs P.!! (k - i) | i <- [1 .. k]]) / u0
-   in vs
+recipSeries u0 us = recip u0 : CP.scan (recipTailProcess u0) us
 
 instance
   (Additive a, Subtractive a, Multiplicative a, Divisive a) =>
   NumHask.Algebra.Multiplicative.Divisive (Jet a)
   where
-  recip (Jet xs) = Jet (P.take (P.length xs) (recipSeries xs))
+  recip (Jet []) = Jet []
+  recip (Jet (u0 : us)) = Jet (recipSeries u0 us)
 
 -- ---------------------------------------------------------------------------
 -- Field instances (exp / log / trig)
@@ -181,61 +202,120 @@ integrate c0 (Jet ds) =
 scale :: (Multiplicative a) => a -> Jet a -> Jet a
 scale s (Jet cs) = Jet (P.map (s *) cs)
 
--- | Simultaneously compute the Taylor coefficients of sin(u) and cos(u)
--- around a primal point @u0@, using the recurrences
+-- | Tail process for the mutual sin/cos series.
+--
+-- Around a primal point @u0@, the recurrences are
 -- @m s_m = sum_{j=0}^{m-1} (m-j) c_j u_{m-j}@ and
 -- @m c_m = -sum_{j=0}^{m-1} (m-j) s_j u_{m-j}@.
+-- The process consumes @u1, u2, ...@ and emits @(s1, c1), (s2, c2), ...@;
+-- the caller prepends @(sin u0, cos u0)@.
+sinCosTailProcess ::
+  (TrigField a, FromInteger a) =>
+  a ->
+  CP.Process a (a, a)
+sinCosTailProcess u0 =
+  CP.Process inject step extract
+  where
+    s0 = sin u0
+    c0 = cos u0
+    inject u = step ([s0], [c0], []) u
+    step (ss, cs, us) u =
+      let k = P.length ss
+          us' = us ++ [u]
+          m' = fromInteger (P.toInteger k)
+          sSum = sum [fromInteger (P.toInteger (k - j)) * (cs P.!! j) * (us' P.!! (k - 1 - j)) | j <- [0 .. k - 1]]
+          cSum = sum [fromInteger (P.toInteger (k - j)) * (ss P.!! j) * (us' P.!! (k - 1 - j)) | j <- [0 .. k - 1]]
+          sk = (one / m') * sSum
+          ck = negate (one / m') * cSum
+       in (ss ++ [sk], cs ++ [ck], us')
+    extract (ss, cs, _) = (P.last ss, P.last cs)
+
+-- | Simultaneously compute the Taylor coefficients of sin(u) and cos(u)
+-- around a primal point @u0@.
 sinCosSeries ::
   (TrigField a, FromInteger a) =>
   a ->
   [a] ->
   (Jet a, Jet a)
 sinCosSeries u0 us =
-  let n = P.length us
-      pairs = P.map go [0 .. n]
-      go 0 = (sin u0, cos u0)
-      go m =
-        let m' = fromInteger (P.toInteger m)
-            sSum = sum [fromInteger (P.toInteger (m - j)) * snd (pairs P.!! j) * (us P.!! (m - j - 1)) | j <- [0 .. m - 1]]
-            cSum = sum [fromInteger (P.toInteger (m - j)) * fst (pairs P.!! j) * (us P.!! (m - j - 1)) | j <- [0 .. m - 1]]
-         in ((one / m') * sSum, negate (one / m') * cSum)
+  let pairs = (sin u0, cos u0) : CP.scan (sinCosTailProcess u0) us
       (ss, cs) = P.unzip pairs
    in (Jet ss, Jet cs)
 
--- | Square-root series via coefficient matching.
+-- | Tail process for the square-root series.
 --
 -- If @u = v²@ with @u = u0 + u1*h + ...@ and @v = v0 + v1*h + ...@ then
 -- @v0 = sqrt(u0)@ and @vk = (uk - sum_{i=1}^{k-1} vi v{k-i}) / (2 v0)@.
+-- The process consumes @u1, u2, ...@ and emits @v1, v2, ...@; the caller
+-- prepends @v0@.
+sqrtTailProcess ::
+  (ExpField a) =>
+  a ->
+  CP.Process a a
+sqrtTailProcess u0 =
+  CP.Process inject step extract
+  where
+    v0 = sqrt u0
+    twoV0 = v0 + v0
+    inject u = step ([v0], []) u
+    step (vs, us) u =
+      let k = P.length vs
+          us' = us ++ [u]
+          inner = sum [vs P.!! i * vs P.!! (k - i) | i <- [1 .. k - 1]]
+          vk = (us' P.!! (k - 1) - inner) / twoV0
+       in (vs ++ [vk], us')
+    extract (vs, _) = P.last vs
+
+-- | Square-root series as a coinductive stream.
 sqrtSeries ::
   (ExpField a) =>
+  a ->
   [a] ->
   [a]
-sqrtSeries [] = []
-sqrtSeries (u0 : us) =
-  let v0 = sqrt u0
-      twoV0 = v0 + v0
-      n = P.length us
-      vs = P.map go [0 .. n]
-      go 0 = v0
-      go k =
-        let inner = sum [vs P.!! i * vs P.!! (k - i) | i <- [1 .. k - 1]]
-         in (us P.!! (k - 1) - inner) / twoV0
-   in vs
+sqrtSeries u0 us = sqrt u0 : CP.scan (sqrtTailProcess u0) us
 
 instance (FromInteger a) => FromInteger (Jet a) where
   fromInteger n = Jet [fromInteger n]
 
+-- | Tail process for the exponential series.
+--
+-- Solves @v' = v * u'@ with @v0 = exp(u0)@ coefficient-wise:
+-- @m v_m = sum_{j=0}^{m-1} (m-j) v_j u_{m-j}@.
+-- The process consumes @u1, u2, ...@ and emits @v1, v2, ...@; the caller
+-- prepends @v0@.
+expTailProcess ::
+  (ExpField a, FromInteger a) =>
+  a ->
+  CP.Process a a
+expTailProcess u0 =
+  CP.Process inject step extract
+  where
+    v0 = exp u0
+    inject u = step ([v0], []) u
+    step (vs, us) u =
+      let m = P.length vs
+          us' = us ++ [u]
+          m' = fromInteger (P.toInteger m)
+          vm =
+            (one / m')
+              * sum
+                [ fromInteger (P.toInteger (m - j)) * (vs P.!! j) * (us' P.!! (m - 1 - j))
+                | j <- [0 .. m - 1]
+                ]
+       in (vs ++ [vm], us')
+    extract (vs, _) = P.last vs
+
+-- | Exponential series as a coinductive stream.
+expSeries ::
+  (ExpField a, FromInteger a) =>
+  a ->
+  [a] ->
+  [a]
+expSeries u0 us = exp u0 : CP.scan (expTailProcess u0) us
+
 instance (Subtractive a, Divisive a, ExpField a, FromInteger a) => ExpField (Jet a) where
   exp (Jet []) = Jet []
-  exp (Jet (u0 : us)) =
-    let -- Solve v' = v * u' with v0 = exp(u0) coefficient-wise.
-        n = P.length us
-        vs = P.map go [0 .. n]
-        go 0 = exp u0
-        go m =
-          let m' = fromInteger (P.toInteger m)
-           in (one / m') * sum [fromInteger (P.toInteger (m - j)) * (vs P.!! j) * (us P.!! (m - j - 1)) | j <- [0 .. m - 1]]
-     in Jet vs
+  exp (Jet (u0 : us)) = Jet (expSeries u0 us)
 
   log (Jet []) = Jet []
   log (Jet (u0 : us)) =
@@ -243,7 +323,7 @@ instance (Subtractive a, Divisive a, ExpField a, FromInteger a) => ExpField (Jet
      in integrate (log u0) (differentiate u / u)
 
   sqrt (Jet []) = Jet []
-  sqrt (Jet xs) = Jet (P.take (P.length xs) (sqrtSeries xs))
+  sqrt (Jet (u0 : us)) = Jet (sqrtSeries u0 us)
 
 instance (Subtractive a, Divisive a, ExpField a, TrigField a, FromInteger a) => TrigField (Jet a) where
   pi = Jet [pi]
