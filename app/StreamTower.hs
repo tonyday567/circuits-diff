@@ -103,7 +103,7 @@ fibRec n = go n
 fibCompanion :: Int -> [[Double]]
 fibCompanion n =
   [ [if i >= 2 && (j == i P.- 1 || j == i P.- 2) then 1.0 else 0.0 | j <- [0 .. n]]
-    | i <- [0 .. n]
+  | i <- [0 .. n]
   ]
 
 runStreamTowerTests :: IO ()
