@@ -4,19 +4,23 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | Pointwise linearization and backpropagation for 'Diff' nets.
+-- | Pointwise linearization and backpropagation for 'Diff' nets and loops.
 --
--- 'linearizeAt' runs a 'Net (,) (,) Diff forward at a primal point and builds the
--- transposed net of pointwise pullbacks.  This is the honest reverse-mode
+-- 'linearizeAt' runs a 'Net (,) (Diff p)' forward at a primal point and builds
+-- the transposed net of pointwise pullbacks.  This is the honest reverse-mode
 -- gradient net: the graph's structure is burned down into a straight linear
 -- (affine) cotangent map.
+--
+-- For feedback-bearing circuits, use 'linearizeLoop' on a 'C.Loop' value.
+-- 'Net' no longer carries knots, so loop linearization lives directly in the
+-- traced category.
 module Circuit.Diff.Backprop
   ( -- * Pointwise linearization
     linearizeAt,
     fromDiffAt,
 
     -- * Linearization over the loop language
-    linearizeCircuit,
+    linearizeLoop,
   )
 where
 
@@ -25,7 +29,8 @@ import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Diff.Circuit ()
 import Circuit.Diff.Pullback (Pullback (..))
 import Circuit.Loop qualified as C
-import Circuit.Net (ChannelEvidence (..), Net (..))
+import Circuit.Net (Net (..), lift)
+import Circuit.SMC (SMC (..))
 import Prelude hiding (id, (.))
 
 -- $setup
@@ -35,8 +40,8 @@ import Prelude hiding (id, (.))
 -- >>> import Circuit.Diff.Pullback (Pullback (..), evalPullback)
 -- >>> import Prelude hiding (id, (.))
 
--- | Pointwise linearization: run a 'Net Diff forward at @a@ and
--- build the transposed net of pullbacks.
+-- | Pointwise linearization: run a 'Net' of 'Diff' primitives forward at @a@
+-- and build the transposed net of pullbacks.
 --
 -- This is the same operation as /backpropagation/, but read forwards
 -- through the lens of 'linearize': the graph's structure is burned down
@@ -46,7 +51,7 @@ import Prelude hiding (id, (.))
 -- straightens them into a wire in the reverse direction.
 --
 -- This is the honest reverse-mode gradient net.  'transpose' alone is
--- only correct for linear nets; for nonlinear 'Diff primitives the
+-- only correct for linear nets; for nonlinear 'Diff' primitives the
 -- pullback closure depends on the primal point.  'linearizeAt' runs
 -- the net, captures each primitive's pullback at the point it saw,
 -- and returns both the output value and a 'Net Pullback' whose wires
@@ -55,28 +60,15 @@ import Prelude hiding (id, (.))
 -- Use 'Circuit.Diff.Pullback.evalPullback' to evaluate the resulting net
 -- at a single output cotangent.
 --
--- __Caveat__: /Fixpoints are lazy on both passes./  Forward 'Trace's tie
--- the same lazy knot as 'Trace' @Diff@; the 'Trace's in the returned net
--- tie the lazy 'Trace' @Pullback@ knot.  For strict carriers with
--- nonzero channel self-coupling, /both/ diverge.  The forward side needs
--- an iteration policy (a @linearizeAtNFrom@, mirroring 'traceNFrom').  The
--- backward side deserves better: the pullback net is linear by
--- construction, so its knots satisfy affine equations and can be
--- /eliminated/ — probe the knot body for its channel matrix,
--- 'Circuit.Mat.Dense.starMatrix' it, and replace the 'Trace' with a 'Lift'.
--- That elimination pass is state elimination on a linear circuit: the
--- linear-representation normal form that @kleeneSimplify@ gestures at,
--- landing where it can actually be lawful.
---
 -- >>> let sq = Diff (\x -> (x * x, \d -> 2 * x * d))
--- >>> let n = Compose (Lift (CD.plus :: Diff' (Double, Double) Double)) (Compose (Par (Lift sq) (Lift sq)) Copy) :: Net (,) (,) Diff' Double Double
+-- >>> let n = Plus . Par (lift sq) (lift sq) . Copy :: Net (,) Diff' Double Double
 -- >>> let (y, g) = linearizeAt n 3.0
 -- >>> y
 -- 18.0
 -- >>> evalPullback g 1.0
 -- 12.0
 
--- | Capture the pullback of a 'Diff primitive at a primal point.
+-- | Capture the pullback of a 'Diff' primitive at a primal point.
 --
 -- >>> let d = Diff (\x -> (x * x, \dy -> 2 * x * dy))
 -- >>> runPullback (fromDiffAt d 3) 1
@@ -85,34 +77,28 @@ fromDiffAt :: forall p a b. Diff p a b -> a -> Pullback b a
 fromDiffAt (Diff f) a = Pullback (snd (f a))
 {-# INLINE fromDiffAt #-}
 
--- | Run a 'Net Diff forward and build the transposed pullback net.
+-- | Run a 'Net' of 'Diff' primitives forward and build the transposed
+-- pullback net.
 --
--- This linearizes the 'Net' directly, without 'Circuit.Net.melt', so
--- 'Trace's inside 'Par' arms survive as 'Trace's in the pullback net.
+-- Structural rows ('Copy', 'Plus', 'Discard', 'Zero') are converted to
+-- point-independent 'lift' pullbacks using the 'Diff' dictionaries the
+-- constructors already carry (copy↦plus, plus↦dup, discard↦zero,
+-- zero↦discard).
 linearizeAt ::
   forall p a b.
-  Net (,) (,) (Diff p) a b ->
+  Net (,) (Diff p) a b ->
   a ->
-  (b, Net (,) (,) Pullback b a)
+  (b, Net (,) Pullback b a)
 linearizeAt = linearizeNet
 
 -- | Pointwise linearization over the free 'Net' language.
---
--- 'Par' is preserved as 'Par'.  Structural rows ('Copy', 'Add',
--- 'Discard', 'Zero') are converted to point-independent 'Lift'
--- pullbacks using the 'Diff dictionaries the constructors already
--- carry (copy↦plus, add↦dup, discard↦zero, zero↦discard).  Because the
--- recursion never melts the net into a 'Trace' first, feedback loops
--- under 'Par' remain visible to future star-elimination passes.
 linearizeNet ::
   forall p a b.
-  Net (,) (,) (Diff p) a b ->
+  Net (,) (Diff p) a b ->
   a ->
-  (b, Net (,) (,) Pullback b a)
+  (b, Net (,) Pullback b a)
 linearizeNet n a = case n of
-  Lift d ->
-    let (b, pb) = runDiff d a
-     in (b, Lift (Pullback pb))
+  FromSMC s -> linearizeSMC s a
   Compose g f ->
     let (b, f') = linearizeNet f a
         (c, g') = linearizeNet g b
@@ -122,37 +108,60 @@ linearizeNet n a = case n of
         (b, f') = linearizeNet f a1
         (d, g') = linearizeNet g a2
      in ((b, d), Par f' g')
-  Swap ->
-    let (x, y) = a
-     in ((y, x), Swap)
   Copy ->
     let (out, pb) = runDiff (copyT :: Diff p a (a, a)) a
-     in (out, Lift (Pullback pb))
+     in (out, lift (Pullback pb))
   Discard ->
     let (out, pb) = runDiff (discardT @(,) :: Diff p a ()) a
-     in (out, Lift (Pullback pb))
+     in (out, lift (Pullback pb))
   Plus ->
     let (out, pb) = runDiff (plusT :: Diff p (b, b) b) a
-     in (out, Lift (Pullback pb))
+     in (out, lift (Pullback pb))
   Zero ->
     let (out, pb) = runDiff (zeroT @(,) :: Diff p () b) ()
-     in (out, Lift (Pullback pb))
-  Knot ev f ->
-    let ~((x, b), f') = linearizeNet f (x, a)
-     in (b, Knot ev f')
+     in (out, lift (Pullback pb))
+  where
+    linearizeSMC ::
+      forall x y.
+      SMC (,) (Diff p) x y ->
+      x ->
+      (y, Net (,) Pullback y x)
+    linearizeSMC s x = case s of
+      SMCLift d ->
+        let (y, pb) = runDiff d x
+         in (y, lift (Pullback pb))
+      SMCCompose g f ->
+        let (b, f') = linearizeSMC f x
+            (c, g') = linearizeSMC g b
+         in (c, Compose f' g')
+      SMCPar f g ->
+        let (x1, x2) = x
+            (b, f') = linearizeSMC f x1
+            (d, g') = linearizeSMC g x2
+         in ((b, d), Par f' g')
+      SMCSwap ->
+        let (u, v) = x
+         in ((v, u), FromSMC SMCSwap)
 
--- | Pointwise linearization over the core 'Loop' language.  The
--- bimonoid rows ('Copy', 'Plus', ...) have already been melted into
--- 'Lift's by 'Circuit.Net.melt', so this recursion only sees 'Lift' and
--- 'Knot'.
-linearizeCircuit ::
+-- | Pointwise linearization over the core 'Loop' language.
+--
+-- The bimonoid rows ('Copy', 'Plus', ...) have already been melted into
+-- 'C.Lift's by 'Circuit.Net.melt', so this recursion only sees 'C.Lift' and
+-- 'C.Knot'.
+--
+-- /Caveat/: fixpoints are lazy on both passes.  Forward 'C.Knot' ties the
+-- same lazy knot as 'Trace' @Diff@; the 'C.Knot's in the returned loop tie
+-- the lazy 'Trace' @Pullback@ knot.  For strict carriers with nonzero
+-- channel self-coupling, /both/ diverge.  The backward side can be solved
+-- in closed form by 'Circuit.Diff.Eliminate.eliminateKnots'.
+linearizeLoop ::
   forall p a b.
   C.Loop (,) (Diff p) a b ->
   a ->
-  (b, Net (,) (,) Pullback b a)
-linearizeCircuit (C.Lift (Diff f)) a =
+  (b, C.Loop (,) Pullback b a)
+linearizeLoop (C.Lift (Diff f)) a =
   let (b, pb) = f a
-   in (b, Lift (Pullback pb))
-linearizeCircuit (C.Knot f) a =
+   in (b, C.Lift (Pullback pb))
+linearizeLoop (C.Knot f) a =
   let ~((x, b), pb) = runDiff f (x, a)
-   in (b, Knot NoEvidence (Lift (Pullback pb)))
+   in (b, C.Knot (Pullback pb))

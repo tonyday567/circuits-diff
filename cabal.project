@@ -2,6 +2,7 @@ packages:
   circuits-diff.cabal
   ../circuits-diff-machina/circuits-diff-machina.cabal
   ../circuits/circuits.cabal
+  ../circuits-tools/circuits-tools.cabal
   ../circuits-mat/circuits-mat.cabal
   ../harpie/harpie.cabal
   ../numhask/numhask.cabal

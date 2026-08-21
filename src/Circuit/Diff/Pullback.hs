@@ -8,7 +8,7 @@
 -- (output cotangent) to @a@ (input cotangent).  Composition is plain
 -- function composition — the /reversal/ is not in this category, it is
 -- in how nets are built over it: 'Circuit.Diff.Backprop.linearizeAt' transposes a
--- @Net (,) (,) Diff a b@ into a @Net (,) (,) Pullback b a@, emitting
+-- @Net (,) (Diff p) a b@ into a @Net (,) Pullback b a@, emitting
 -- @Compose f' g'@ for every source @Compose g f@.  Within an arrow the
 -- chain rule is then just @(.)@.
 --
@@ -159,7 +159,7 @@ instance (Zero (->) a) => Zero Pullback a where
 -- This is the one-shot reverse pass: the net was built by
 -- 'linearizeAt', and applying it to a cotangent @db@ yields the
 -- input cotangent @da@.
-evalPullback :: Net (,) (,) Pullback b a -> b -> a
+evalPullback :: Net (,) Pullback b a -> b -> a
 evalPullback n = runPullback (run n)
 {-# INLINE evalPullback #-}
 

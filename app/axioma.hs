@@ -5,10 +5,10 @@ module Main (main) where
 import Circuit (Loop, run)
 import Circuit qualified
 import Circuit.Channel (Traced (..))
-import Circuit.Diff.Backprop (linearizeAt)
+import Circuit.Diff.Backprop (linearizeAt, linearizeLoop)
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
-import Circuit.Diff.Pullback (evalPullback)
-import Circuit.Net (ChannelEvidence (..), Net (..))
+import Circuit.Diff.Pullback (Pullback (..), evalPullback)
+import Circuit.Net (Net (..), lift)
 import DiffCarrierTests (runDiffCarrierTests)
 import Kepler (runKeplerTests)
 import MatrixStar (runMatrixStarTests)
@@ -40,8 +40,8 @@ constD :: Double -> Diff' Double Double
 constD c = Diff (const (c, const 0))
 
 -- | Net computing 2*x^2 via copy, parallel squares, then add.
-quadNet :: Net (,) (,) Diff' Double Double
-quadNet = Compose Plus (Compose (Par (Lift sq) (Lift sq)) Copy)
+quadNet :: Net (,) Diff' Double Double
+quadNet = Compose Plus (Compose (Par (lift sq) (lift sq)) Copy)
 
 -- | Linear feedback loop: x' = 0.3*x + 2*b, c = x + b.
 loopBody :: Diff' (Double, Double) (Double, Double)
@@ -115,10 +115,10 @@ main = do
               ((0.0, x + 2.0 * b), \(_, dc) -> (dc, 2.0 * dc))
           ) ::
           Diff' (Double, Double) (Double, Double)
-      innerKnot = Knot NoEvidence (Lift innerBody) :: Net (,) (,) Diff' Double Double
-      net = Par (Lift sq) innerKnot :: Net (,) (,) Diff' (Double, Double) (Double, Double)
-      (y7, g7) = linearizeAt net (3.0, 4.0)
-      (gx, gb) = evalPullback g7 (1.0, 1.0)
+      innerKnot = Circuit.Knot innerBody :: Loop (,) Diff' Double Double
+      net = Circuit.par (Circuit.Lift sq) innerKnot :: Loop (,) Diff' (Double, Double) (Double, Double)
+      (y7, g7) = linearizeLoop net (3.0, 4.0)
+      (gx, gb) = runPullback (run g7) (1.0, 1.0)
   assert "value fst" (fst y7) 9.0
   assert "value snd" (snd y7) 8.0
   assert "gradient x" gx 6.0
