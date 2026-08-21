@@ -4,39 +4,40 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | Pointwise linearization and backpropagation for 'Diff' nets and loops.
+-- | Pointwise linearization and backpropagation for 'Diff' nets and bodies.
 --
 -- 'linearizeAt' runs a 'Net (,) (Diff p)' forward at a primal point and builds
 -- the transposed net of pointwise pullbacks.  This is the honest reverse-mode
 -- gradient net: the graph's structure is burned down into a straight linear
 -- (affine) cotangent map.
 --
--- For feedback-bearing circuits, use 'linearizeLoop' on a 'C.Loop' value.
--- 'Net' no longer carries knots, so loop linearization lives directly in the
--- traced category.
+-- For feedback-bearing circuits, use 'linearizeBody' on a 'Body' value.
+-- The channel type stays exposed, so star-elimination can operate without
+-- recovering evidence from a hidden 'Loop.Knot'.
 module Circuit.Diff.Backprop
   ( -- * Pointwise linearization
     linearizeAt,
     fromDiffAt,
 
-    -- * Linearization over the loop language
-    linearizeLoop,
+    -- * Linearization over the body language
+    linearizeBody,
   )
 where
 
+import Circuit.Body (Body (..))
 import Circuit.Dagger (CopyT (..), DiscardT (..), MergeT (..), ZeroT (..))
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Diff.Circuit ()
 import Circuit.Diff.Pullback (Pullback (..))
-import Circuit.Loop qualified as C
 import Circuit.Net (Net (..), lift)
 import Circuit.SMC (SMC (..))
 import Prelude hiding (id, (.))
 
 -- $setup
+-- >>> import Circuit.Category ((.))
 -- >>> import Circuit.Diff
 -- >>> import Circuit.Dagger qualified as CD
--- >>> import Circuit.Net (Net (..))
+-- >>> import Circuit.Net (Net (..), lift)
 -- >>> import Circuit.Diff.Pullback (Pullback (..), evalPullback)
 -- >>> import Prelude hiding (id, (.))
 
@@ -143,25 +144,21 @@ linearizeNet n a = case n of
         let (u, v) = x
          in ((v, u), FromSMC SMCSwap)
 
--- | Pointwise linearization over the core 'Loop' language.
+-- | Pointwise linearization over the core 'Body' language.
 --
--- The bimonoid rows ('Copy', 'Plus', ...) have already been melted into
--- 'C.Lift's by 'Circuit.Net.melt', so this recursion only sees 'C.Lift' and
--- 'C.Knot'.
+-- The channel type @s@ stays exposed, so the result can be fed directly to
+-- 'Circuit.Diff.Star.solveStarBody' without any coercion.
 --
--- /Caveat/: fixpoints are lazy on both passes.  Forward 'C.Knot' ties the
--- same lazy knot as 'Trace' @Diff@; the 'C.Knot's in the returned loop tie
--- the lazy 'Trace' @Pullback@ knot.  For strict carriers with nonzero
--- channel self-coupling, /both/ diverge.  The backward side can be solved
--- in closed form by 'Circuit.Diff.Eliminate.eliminateKnots'.
-linearizeLoop ::
-  forall p a b.
-  C.Loop (,) (Diff p) a b ->
+-- /Caveat/: fixpoints are lazy on both passes.  The forward body ties the
+-- same lazy knot as 'Trace' @Diff@; the returned body ties the lazy
+-- 'Trace' @Pullback@ knot.  For strict carriers with nonzero channel
+-- self-coupling, /both/ diverge.  The backward side can be solved in closed
+-- form by 'Circuit.Diff.Star.solveStarBody'.
+linearizeBody ::
+  forall p s a b.
+  Body (,) (Diff p) s a b ->
   a ->
-  (b, C.Loop (,) Pullback b a)
-linearizeLoop (C.Lift (Diff f)) a =
-  let (b, pb) = f a
-   in (b, C.Lift (Pullback pb))
-linearizeLoop (C.Knot f) a =
-  let ~((x, b), pb) = runDiff f (x, a)
-   in (b, C.Knot (Pullback pb))
+  (b, Body (,) Pullback s b a)
+linearizeBody (Body f) a =
+  let ~((s, b), pb) = runDiff f (s, a)
+   in (b, Body (Pullback pb))

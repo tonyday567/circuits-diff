@@ -25,24 +25,36 @@ module Circuit.Diff.Star
   ( -- * Polymorphic bridge
     traceStarMatrix,
 
+    -- * Body bridge
+    solveStarBody,
+
     -- * Double adapters (via 'FieldStar')
     traceStarFromD,
     traceStarMatrixD,
   )
 where
 
-import Circuit.Dagger (MergeZero)
+import Circuit.Body (Body (..))
+import Circuit.Dagger (Merge, MergeZero, Zero)
 import Circuit.Dagger qualified as CD
 import Circuit.Diff.Circuit (Diff (..), traceStarFrom)
-import Circuit.Mat.Dense (fromLists, matVec, starMatrix)
+import Circuit.Diff.Evidence (StarChannel (..))
+import Circuit.Diff.Pullback (Pullback (..))
+import Circuit.Mat.Dense (fromLists, matVec)
+import Circuit.Mat.Dense qualified as MD
 import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Multiplicative qualified as NHM
 import NumHask.Algebra.Ring qualified as NHR
 import NumHask.Free.Carriers (FieldStar (..))
 import Prelude hiding (id, (.))
+import Prelude qualified as P
 
 -- $setup
+-- >>> import Circuit.Body (Body (..))
 -- >>> import Circuit.Diff.Circuit
+-- >>> import Circuit.Diff.Evidence (StarChannel (..), fieldStarChannel, withStarChannel)
+-- >>> import Circuit.Diff.Pullback (Pullback (..))
+-- >>> import NumHask.Free.Carriers (FieldStar (..))
 -- >>> import Prelude hiding (id, (.))
 
 -- | Trace over a /vector/ feedback channel, backward pass solved by
@@ -84,7 +96,7 @@ traceStarMatrix x0 n (Diff body) = Diff $ \b ->
       aMat = fromLists [[col !! k | col <- cols] | k <- [0 .. dim - 1]]
       -- star A — Gaussian elimination / Warshall / Floyd–Warshall /
       -- state elimination, depending on the carrier
-      aStar = starMatrix aMat
+      aStar = MD.starMatrix aMat
       pullback dc =
         let cdc = fst (backward (zeroV, dc))
          in snd (backward (matVec aStar cdc, dc))
@@ -162,3 +174,95 @@ traceStarMatrixD x0 n (Diff body) =
               let (dxs, db) = back (unwrap djs, dc)
                in (wrap dxs, db)
           )
+
+-- | 'FieldStar' as a numeric carrier for circuits' additive structure, so
+-- hand-built bodies can use structural rows at 'FieldStar' types.  (Bodies from
+-- 'Circuit.Diff.Backprop.linearizeBody' never need this — their structural rows
+-- are already pointwise pullbacks.)
+--
+-- These instances remain necessary because structural rows ('Plus', 'Zero')
+-- carry 'MergeT' / 'ZeroT' constraints that resolve to 'Merge' / 'Zero' on
+-- the wiring arrow.  For 'Pullback FieldStar' those constraints bottom out in
+-- 'Merge (->) FieldStar' and 'Zero (->) FieldStar'.  Deliberately orphan: this
+-- module is the federation seam between @circuits@ and @numhask-free@.
+instance Circuit.Dagger.Merge (->) FieldStar where
+  plus (FieldStar x, FieldStar y) = FieldStar (x P.+ y)
+
+instance Circuit.Dagger.Zero (->) FieldStar where
+  zero _ = FieldStar 0
+
+-- | Solve one affine body in closed form.
+--
+-- For a body @f :: (StarChannel j, c) -> (StarChannel j, b)@ (channel
+-- cotangent, output cotangent), affinity gives @f₁ (dj, dc) = A·dj + C·dc@.
+-- The probes:
+--
+-- > C·dc = f₁ (0, dc)                       -- one call, at the true zero
+-- > A·e_i = f₁ (e_i, dc) − C·dc             -- offset-subtracted: valid at dc ≠ 0
+-- > dj   = star A · C·dc                    -- starMatrix
+-- > db   = f₂ (dj, dc)                      -- one final call
+--
+-- The dictionary is recovered from the output of a lazy probe: a body built
+-- with 'Circuit.Diff.Evidence.withStarChannel' carries the same dictionary
+-- through the trace, so pattern-matching the output reveals it without
+-- evaluating the input data.
+--
+-- The offset subtraction is what lets every probe run at the /actual/
+-- cotangent @dc@, so no @zero@ for the (existential) type @c@ is ever
+-- needed.  Cost: @dim + 2@ body calls per cotangent; the star is /not/
+-- shared across cotangents — that is the price of the existential.
+solveAffine ::
+  forall j c b.
+  ((StarChannel j, c) -> (StarChannel j, b)) ->
+  c ->
+  b
+solveAffine body dc =
+  let -- A bottom value of type 'StarChannel j'.  Only the constructor is
+      -- needed; the fields are supplied lazily by the body's output.
+      probe :: StarChannel j
+      probe =
+        StarChannel
+          { starDim = error "Circuit.Diff.Star.solveAffine: probe dim evaluated",
+            starData = error "Circuit.Diff.Star.solveAffine: probe data evaluated",
+            starZero = error "Circuit.Diff.Star.solveAffine: probe zero evaluated",
+            starBasis = error "Circuit.Diff.Star.solveAffine: probe basis evaluated",
+            starAdd = error "Circuit.Diff.Star.solveAffine: probe add evaluated",
+            starNegate = error "Circuit.Diff.Star.solveAffine: probe negate evaluated",
+            starSelfMatrix = error "Circuit.Diff.Star.solveAffine: probe selfMatrix evaluated",
+            starApplyMatrix = error "Circuit.Diff.Star.solveAffine: probe applyMatrix evaluated",
+            starMatrix = error "Circuit.Diff.Star.solveAffine: probe matrix evaluated"
+          }
+      (scOut, _) = body (probe, dc)
+      zeroJ = starZero scOut (starDim scOut)
+      zeroSC = scOut {starData = zeroJ}
+      cdc = starData (fst (body (zeroSC, dc)))
+      negCdc = starNegate scOut cdc
+      aMat =
+        starSelfMatrix
+          scOut
+          (starDim scOut)
+          (\dk -> starAdd scOut (starData (fst (body (zeroSC {starData = dk}, dc)))) negCdc)
+      dj = starApplyMatrix scOut (starMatrix scOut aMat) cdc
+   in snd (body (zeroSC {starData = dj}, dc))
+
+-- | Solve a @(,)@ feedback body whose channel is 'StarChannel' in closed form.
+--
+-- The channel type stays exposed, so the dictionary is read directly from the
+-- 'StarChannel' value carried on the feedback wire.
+--
+-- A self-coupled scalar body the lazy trace diverges on, solved exactly
+-- (@dj = 0.3·dj + 2·dc@, @db = dj@, so @db\/dc = 2\/0.7@):
+--
+-- >>> :{
+-- let body (FieldStar dj, dc) = (FieldStar (0.3 * dj + 2.0 * dc), dj)
+--     b = Body (withStarChannel fieldStarChannel (Pullback body)) :: Body (,) Pullback (StarChannel FieldStar) Double Double
+-- :}
+--
+-- >>> let solved = solveStarBody b
+-- >>> abs (runPullback solved 1.0 - 2.0 / 0.7) < 1e-12
+-- True
+solveStarBody ::
+  forall s a b.
+  Body (,) Pullback (StarChannel s) b a ->
+  Pullback b a
+solveStarBody (Body f) = Pullback (solveAffine (runPullback f))

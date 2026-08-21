@@ -131,8 +131,8 @@ listStarChannel dim =
 --
 -- The supplied @dict@ provides the elimination dictionary; the body only
 -- needs to update 'starData'.  The output value reuses @dict@'s dictionary
--- fields, so 'Circuit.Diff.Eliminate.eliminateKnots' can recover them with a
--- lazy probe.
+-- fields, so 'Circuit.Diff.Star.solveStarBody' can read them directly from
+-- the exposed channel type.
 withStarChannel ::
   StarChannel s ->
   Pullback (s, b) (s, c) ->

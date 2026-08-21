@@ -54,7 +54,6 @@ library
     Circuit.Diff.Chart
     Circuit.Diff.Circuit
     Circuit.Diff.Curvature
-    Circuit.Diff.Eliminate
     Circuit.Diff.Evidence
     Circuit.Diff.Inverse
     Circuit.Diff.Jacobian

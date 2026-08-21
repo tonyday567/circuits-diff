@@ -1,13 +1,13 @@
--- | Tests for star-elimination of '(,)' knots in linear pullback loops.
+-- | Tests for star-elimination of '(,)' knots in linear pullback bodies.
 module StarEliminate
   ( runStarEliminateTests,
   )
 where
 
+import Circuit.Body (Body (..))
 import Circuit.Category ((.))
-import Circuit.Diff.Backprop (linearizeLoop)
+import Circuit.Diff.Backprop (linearizeBody)
 import Circuit.Diff.Circuit (Diff (..))
-import Circuit.Diff.Eliminate (eliminateKnots)
 import Circuit.Diff.Evidence
   ( StarChannel (..),
     fieldStarChannel,
@@ -16,8 +16,7 @@ import Circuit.Diff.Evidence
     withStarChannelDiff,
   )
 import Circuit.Diff.Pullback (Pullback (..))
-import Circuit.Layer (run)
-import Circuit.Loop (Loop (..))
+import Circuit.Diff.Star (solveStarBody)
 import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Multiplicative qualified as NHM
 import NumHask.Free.Carriers (FieldStar (..))
@@ -32,15 +31,15 @@ assert name got expected =
     then putStrLn $ "  PASS " ++ name ++ ": " ++ show got
     else error $ "FAIL " ++ name ++ ": got " ++ show got ++ ", expected " ++ show expected
 
--- | Scalar pullback knot:
+-- | Scalar pullback body:
 --
 -- > (dx, db) = body (dx, dc)  where  dx' = 0.5*dx + dc,  db = dx + 2*dc
 --
 -- The trace equation is @dx = 0.5*dx + dc@, solved by @dx = 2*dc@.
 -- Then @db = dx + 2*dc = 4*dc@.
-scalarKnot :: Loop (,) Pullback FieldStar FieldStar
+scalarKnot :: Body (,) Pullback (StarChannel FieldStar) FieldStar FieldStar
 scalarKnot =
-  Knot $
+  Body $
     withStarChannel fieldStarChannel $
       Pullback
         ( \(FieldStar dx, FieldStar dc) ->
@@ -51,14 +50,14 @@ scalarKnot =
 
 runStarEliminateTests :: IO ()
 runStarEliminateTests = do
-  putStrLn "Star-eliminate scalar pullback knot"
-  let eliminated = eliminateKnots scalarKnot
-      FieldStar g1 = runPullback (run eliminated) (FieldStar 1.0)
-      FieldStar g3 = runPullback (run eliminated) (FieldStar 3.0)
+  putStrLn "Star-eliminate scalar pullback body"
+  let eliminated = solveStarBody scalarKnot
+      FieldStar g1 = runPullback eliminated (FieldStar 1.0)
+      FieldStar g3 = runPullback eliminated (FieldStar 3.0)
   assert "eliminated scalar gradient" g1 4.0
   assert "eliminated scalar gradient at 3" g3 12.0
 
-  putStrLn "Star-eliminate vector pullback knot"
+  putStrLn "Star-eliminate vector pullback body"
   -- Two-dimensional channel over [FieldStar]:
   --   dx1' = 0.5*dx1 + 0.1*dx2 + dc
   --   dx2' = 0.2*dx1 + 0.3*dx2 + 2*dc
@@ -81,20 +80,20 @@ runStarEliminateTests = do
                   ) ::
                     ([FieldStar], FieldStar)
           )
-      vecKnot = Knot (withStarChannel (listStarChannel 2) vecBody) :: Loop (,) Pullback FieldStar FieldStar
-      eliminatedVec = eliminateKnots vecKnot
-      FieldStar gVec = runPullback (run eliminatedVec) (FieldStar 1.0)
+      vecKnot = Body (withStarChannel (listStarChannel 2) vecBody)
+      eliminatedVec = solveStarBody vecKnot
+      FieldStar gVec = runPullback eliminatedVec (FieldStar 1.0)
       expectedVec = (30.0 / 11.0) + (40.0 / 11.0) + 1.0
   assert "eliminated vector gradient" gVec expectedVec
 
   putStrLn "Star-eliminate via composition"
-  let scale3 = Lift (Pullback (\(FieldStar x) -> FieldStar (3.0 * x))) :: Loop (,) Pullback FieldStar FieldStar
-      nested = scale3 . scalarKnot :: Loop (,) Pullback FieldStar FieldStar
-      eliminatedNested = eliminateKnots nested
-      FieldStar gNested = runPullback (run eliminatedNested) (FieldStar 1.0)
+  let scale3 = Body (Pullback (\(sc, FieldStar x) -> (sc, FieldStar (3.0 * x))))
+      nested = scale3 . scalarKnot
+      eliminatedNested = solveStarBody nested
+      FieldStar gNested = runPullback eliminatedNested (FieldStar 1.0)
   assert "composition" gNested 12.0
 
-  putStrLn "Integration: linearize lazy Diff knot, then eliminate"
+  putStrLn "Integration: linearize lazy Diff body, then eliminate"
   -- Forward body has zero channel self-coupling so the lazy Diff knot
   -- converges.  The pullback body has channel coupling 0.5, which would
   -- diverge under a strict Pullback trace; after elimination it is exact.
@@ -107,12 +106,11 @@ runStarEliminateTests = do
               )
           ) ::
           Diff () (FieldStar, FieldStar) (FieldStar, FieldStar)
-      innerBody = withStarChannelDiff fieldStarChannel innerBodyRaw
-      innerKnot = Knot innerBody :: Loop (,) (Diff ()) FieldStar FieldStar
-      (FieldStar y, g) = linearizeLoop innerKnot (FieldStar 4.0)
-      gElim = eliminateKnots g
-      FieldStar gLazy = runPullback (run g) (FieldStar 1.0)
-      FieldStar gElimVal = runPullback (run gElim) (FieldStar 1.0)
+      innerBody = Body (withStarChannelDiff fieldStarChannel innerBodyRaw)
+      (FieldStar y, g) = linearizeBody innerBody (FieldStar 4.0)
+      gElim = solveStarBody g
+      (_, FieldStar gLazy) = runPullback (runBody g) (fieldStarChannel, FieldStar 1.0)
+      FieldStar gElimVal = runPullback gElim (FieldStar 1.0)
   assert "lazy-knot value" y 4.0
   assert "lazy-knot gradient" gLazy 1.0
   assert "eliminated lazy-knot gradient" gElimVal 1.0

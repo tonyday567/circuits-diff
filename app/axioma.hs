@@ -4,8 +4,9 @@ module Main (main) where
 
 import Circuit (Loop, run)
 import Circuit qualified
+import Circuit.Body (Body (..))
 import Circuit.Channel (Traced (..))
-import Circuit.Diff.Backprop (linearizeAt, linearizeLoop)
+import Circuit.Diff.Backprop (linearizeAt, linearizeBody)
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
 import Circuit.Diff.Pullback (Pullback (..), evalPullback)
 import Circuit.Net (Net (..), lift)
@@ -106,8 +107,8 @@ main = do
   assert "value" y6 10.0
   assert "gradient" (pb6 1.0) 5.0
 
-  putStrLn "Par-interior Trace preserved"
-  -- The knot body has zero channel self-coupling in the feedback wire,
+  putStrLn "Par-interior body trace preserved"
+  -- The body has zero channel self-coupling in the feedback wire,
   -- so the lazy 'Trace' knot converges without a forward seed.
   let innerBody =
         Diff
@@ -115,10 +116,16 @@ main = do
               ((0.0, x + 2.0 * b), \(_, dc) -> (dc, 2.0 * dc))
           ) ::
           Diff' (Double, Double) (Double, Double)
-      innerKnot = Circuit.Knot innerBody :: Loop (,) Diff' Double Double
-      net = Circuit.par (Circuit.Lift sq) innerKnot :: Loop (,) Diff' (Double, Double) (Double, Double)
-      (y7, g7) = linearizeLoop net (3.0, 4.0)
-      (gx, gb) = runPullback (run g7) (1.0, 1.0)
+      netBody = Body $ Diff $ \(s, (x, b)) ->
+        let (ySq, sqPb) = runDiff sq x
+            ((s', o), innerPb) = runDiff innerBody (s, b)
+            pb (ds, (dy, do_)) =
+              let dx = sqPb dy
+                  (dsIn, db) = innerPb (ds, do_)
+               in (dsIn, (dx, db))
+         in ((s', (ySq, o)), pb)
+      (y7, g7) = linearizeBody netBody (3.0, 4.0)
+      (_, (gx, gb)) = runPullback (runBody g7) (0.0, (1.0, 1.0))
   assert "value fst" (fst y7) 9.0
   assert "value snd" (snd y7) 8.0
   assert "gradient x" gx 6.0
