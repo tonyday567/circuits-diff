@@ -21,7 +21,6 @@ where
 
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import NumHask.Prelude
-import Prelude ()
 
 -- | Dot product on ℝ².
 dot2 :: (Additive a, Multiplicative a) => (a, a) -> (a, a) -> a

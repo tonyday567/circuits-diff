@@ -35,7 +35,6 @@ import Circuit.Diff.Chart
     raise2D,
   )
 import NumHask.Prelude
-import Prelude ()
 
 -- | Packed Christoffel symbols @Γ^c_{ab}@ for a 2-D chart (c,a,b ∈ {0,1}).
 type Gamma2D a = (a, a, a, a, a, a, a, a)

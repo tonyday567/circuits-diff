@@ -21,7 +21,6 @@ import StreamTower (runStreamTowerTests)
 import System.Exit (exitFailure)
 import Tags (runTagTests)
 import Tensor (runTensorTests)
-import Prelude ()
 
 near :: Double -> Double -> Bool
 near x y = abs (x - y) < 1e-9

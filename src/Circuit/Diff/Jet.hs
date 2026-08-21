@@ -42,8 +42,7 @@ import NumHask.Algebra.Additive (Additive (..), Subtractive (..), sum)
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..))
 import NumHask.Data.Integral (FromInteger (..))
-import Prelude hiding (acos, asin, atan, atan2, cos, exp, fromInteger, log, negate, pi, recip, sin, sqrt, sum, (*), (+), (-), (/))
-import Prelude qualified as P
+import NumHask.Prelude
 
 -- | Truncated Taylor series stored as coefficients @[c0, c1, ..., cn]@
 -- representing @c0 + c1*h + c2*h^2 + ... + cn*h^n@.
@@ -52,33 +51,33 @@ newtype Jet a = Jet {coefficients :: [a]}
 
 -- | Highest power of @h@ present.
 jetOrder :: Jet a -> Int
-jetOrder = P.pred . P.length . coefficients
+jetOrder = pred . length . coefficients
 
 -- | Truncate / pad to the given order.
 resize :: (Additive a) => Int -> Jet a -> Jet a
-resize n (Jet cs) = Jet $ P.take (n P.+ 1) (cs P.++ P.repeat zero)
+resize n (Jet cs) = Jet $ take (n + 1) (cs ++ repeat zero)
 
 -- | Align two jets to the same order by truncating the higher one.
 align :: Jet a -> Jet a -> ([a], [a])
 align (Jet xs) (Jet ys) =
-  let n = P.min (P.length xs) (P.length ys)
-   in (P.take n xs, P.take n ys)
+  let n = min (length xs) (length ys)
+   in (take n xs, take n ys)
 
 -- | Align two jets, lifting a length-1 (constant) jet to the order of the
 -- other by padding with zeros.  This makes @one@, @zero@ and numeric literals
 -- behave as scalars of arbitrary order.
 alignLift :: (Additive a) => Jet a -> Jet a -> ([a], [a])
-alignLift (Jet [x]) (Jet ys) = (x : P.replicate (P.length ys - 1) zero, ys)
-alignLift (Jet xs) (Jet [y]) = (xs, y : P.replicate (P.length xs - 1) zero)
+alignLift (Jet [x]) (Jet ys) = (x : replicate (length ys - 1) zero, ys)
+alignLift (Jet xs) (Jet [y]) = (xs, y : replicate (length xs - 1) zero)
 alignLift (Jet xs) (Jet ys) = align (Jet xs) (Jet ys)
 
 -- | Build a jet of order @n@ representing the input variable @a + h@.
 variable :: (Additive a, Multiplicative a) => Int -> a -> Jet a
-variable n a = Jet (a : one : P.replicate (n P.- 1) zero)
+variable n a = Jet (a : one : replicate (n - 1) zero)
 
 -- | Build a constant jet of order @n@.
 constant :: (Additive a) => Int -> a -> Jet a
-constant n c = Jet (c : P.replicate n zero)
+constant n c = Jet (c : replicate n zero)
 
 -- | Seed a first-order jet from a 'Diff' first derivative.
 --
@@ -93,9 +92,9 @@ fromDiff f a =
 --
 -- > taylorDers (Jet [c0, c1, c2]) = [c0, 1!*c1, 2!*c2]
 taylorDers :: (Additive a, Multiplicative a, FromInteger a) => Jet a -> [a]
-taylorDers (Jet cs) = P.zipWith (*) cs factorials
+taylorDers (Jet cs) = zipWith (*) cs factorials
   where
-    factorials = P.scanl (*) one (P.map ((one +) . fromInteger) [(0 :: P.Integer) ..])
+    factorials = scanl (*) one (map ((one +) . fromInteger) [(0 :: Integer) ..])
 
 -- | Apply a jet-level function at a point and return the raw
 -- derivatives @[f(a), f'(a), f''(a), ..., f^(n)(a)]@.
@@ -115,21 +114,21 @@ instance (Additive a) => Additive (Jet a) where
   zero = Jet [zero]
   Jet xs + Jet ys =
     let (xs', ys') = alignLift (Jet xs) (Jet ys)
-     in Jet (P.zipWith (+) xs' ys')
+     in Jet (zipWith (+) xs' ys')
 
 instance (Subtractive a) => Subtractive (Jet a) where
-  negate (Jet xs) = Jet (P.map negate xs)
+  negate (Jet xs) = Jet (map negate xs)
   Jet xs - Jet ys =
     let (xs', ys') = alignLift (Jet xs) (Jet ys)
-     in Jet (P.zipWith (-) xs' ys')
+     in Jet (zipWith (-) xs' ys')
 
 instance (Additive a, Multiplicative a) => Multiplicative (Jet a) where
   one = Jet [one]
-  Jet [c] * Jet ys = Jet (P.map (c *) ys)
-  Jet xs * Jet [c] = Jet (P.map (* c) xs)
+  Jet [c] * Jet ys = Jet (map (c *) ys)
+  Jet xs * Jet [c] = Jet (map (* c) xs)
   Jet xs * Jet ys =
-    let n = P.min (P.length xs) (P.length ys)
-        cauchy k = sum [xs P.!! i * ys P.!! (k - i) | i <- [0 .. k]]
+    let n = min (length xs) (length ys)
+        cauchy k = sum [xs !! i * ys !! (k - i) | i <- [0 .. k]]
      in Jet [cauchy k | k <- [0 .. n - 1]]
 
 -- | Tail process for the reciprocal series.
@@ -148,11 +147,11 @@ recipTailProcess u0 =
     v0 = recip u0
     inject u = step ([v0], []) u
     step (vs, us) u =
-      let k = P.length vs
+      let k = length vs
           us' = us ++ [u]
-          vk = negate (sum [us' P.!! (i - 1) * vs P.!! (k - i) | i <- [1 .. k]]) / u0
+          vk = negate (sum [us' !! (i - 1) * vs !! (k - i) | i <- [1 .. k]]) / u0
        in (vs ++ [vk], us')
-    extract (vs, _) = P.last vs
+    extract (vs, _) = last vs
 
 -- | Reciprocal series as a coinductive stream.
 --
@@ -185,7 +184,7 @@ differentiate ::
   Jet a ->
   Jet a
 differentiate (Jet cs) =
-  Jet [fromInteger (P.toInteger (k :: P.Int)) * c | (k, c) <- P.zip [(1 :: P.Int) ..] (P.drop 1 cs)]
+  Jet [fromInteger (fromIntegral (k :: Int)) * c | (k, c) <- zip [(1 :: Int) ..] (drop 1 cs)]
 
 -- | Term-by-term integration with supplied constant.
 --
@@ -196,11 +195,11 @@ integrate ::
   Jet a ->
   Jet a
 integrate c0 (Jet ds) =
-  Jet (c0 : [d / fromInteger (P.toInteger (k :: P.Int)) | (k, d) <- P.zip [(1 :: P.Int) ..] ds])
+  Jet (c0 : [d / fromInteger (fromIntegral (k :: Int)) | (k, d) <- zip [(1 :: Int) ..] ds])
 
 -- | Scale every coefficient by a scalar.
 scale :: (Multiplicative a) => a -> Jet a -> Jet a
-scale s (Jet cs) = Jet (P.map (s *) cs)
+scale s (Jet cs) = Jet (map (s *) cs)
 
 -- | Tail process for the mutual sin/cos series.
 --
@@ -220,15 +219,15 @@ sinCosTailProcess u0 =
     c0 = cos u0
     inject u = step ([s0], [c0], []) u
     step (ss, cs, us) u =
-      let k = P.length ss
+      let k = length ss
           us' = us ++ [u]
-          m' = fromInteger (P.toInteger k)
-          sSum = sum [fromInteger (P.toInteger (k - j)) * (cs P.!! j) * (us' P.!! (k - 1 - j)) | j <- [0 .. k - 1]]
-          cSum = sum [fromInteger (P.toInteger (k - j)) * (ss P.!! j) * (us' P.!! (k - 1 - j)) | j <- [0 .. k - 1]]
+          m' = fromInteger (fromIntegral k)
+          sSum = sum [fromInteger (fromIntegral (k - j)) * (cs !! j) * (us' !! (k - 1 - j)) | j <- [0 .. k - 1]]
+          cSum = sum [fromInteger (fromIntegral (k - j)) * (ss !! j) * (us' !! (k - 1 - j)) | j <- [0 .. k - 1]]
           sk = (one / m') * sSum
           ck = negate (one / m') * cSum
        in (ss ++ [sk], cs ++ [ck], us')
-    extract (ss, cs, _) = (P.last ss, P.last cs)
+    extract (ss, cs, _) = (last ss, last cs)
 
 -- | Simultaneously compute the Taylor coefficients of sin(u) and cos(u)
 -- around a primal point @u0@.
@@ -239,7 +238,7 @@ sinCosSeries ::
   (Jet a, Jet a)
 sinCosSeries u0 us =
   let pairs = (sin u0, cos u0) : CP.scan (sinCosTailProcess u0) us
-      (ss, cs) = P.unzip pairs
+      (ss, cs) = unzip pairs
    in (Jet ss, Jet cs)
 
 -- | Tail process for the square-root series.
@@ -259,12 +258,12 @@ sqrtTailProcess u0 =
     twoV0 = v0 + v0
     inject u = step ([v0], []) u
     step (vs, us) u =
-      let k = P.length vs
+      let k = length vs
           us' = us ++ [u]
-          inner = sum [vs P.!! i * vs P.!! (k - i) | i <- [1 .. k - 1]]
-          vk = (us' P.!! (k - 1) - inner) / twoV0
+          inner = sum [vs !! i * vs !! (k - i) | i <- [1 .. k - 1]]
+          vk = (us' !! (k - 1) - inner) / twoV0
        in (vs ++ [vk], us')
-    extract (vs, _) = P.last vs
+    extract (vs, _) = last vs
 
 -- | Square-root series as a coinductive stream.
 sqrtSeries ::
@@ -293,17 +292,17 @@ expTailProcess u0 =
     v0 = exp u0
     inject u = step ([v0], []) u
     step (vs, us) u =
-      let m = P.length vs
+      let m = length vs
           us' = us ++ [u]
-          m' = fromInteger (P.toInteger m)
+          m' = fromInteger (fromIntegral m)
           vm =
             (one / m')
               * sum
-                [ fromInteger (P.toInteger (m - j)) * (vs P.!! j) * (us' P.!! (m - 1 - j))
+                [ fromInteger (fromIntegral (m - j)) * (vs !! j) * (us' !! (m - 1 - j))
                 | j <- [0 .. m - 1]
                 ]
        in (vs ++ [vm], us')
-    extract (vs, _) = P.last vs
+    extract (vs, _) = last vs
 
 -- | Exponential series as a coinductive stream.
 expSeries ::
@@ -368,5 +367,5 @@ instance (Subtractive a, Divisive a, ExpField a, TrigField a, FromInteger a) => 
 
 -- | Constant coefficient of a jet.
 headCoeff :: Jet a -> a
-headCoeff (Jet []) = P.error "Circuit.Diff.Jet.headCoeff: empty jet"
+headCoeff (Jet []) = error "Circuit.Diff.Jet.headCoeff: empty jet"
 headCoeff (Jet (c : _)) = c

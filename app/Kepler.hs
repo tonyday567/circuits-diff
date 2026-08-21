@@ -18,7 +18,6 @@ where
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
 import Circuit.Diff.Star (traceStarFromD)
 import NumHask.Prelude
-import Prelude ()
 
 -- | Kepler fixed-point body.
 --

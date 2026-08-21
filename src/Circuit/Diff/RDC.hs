@@ -45,13 +45,11 @@ where
 
 import Circuit.Diff (Diff (..), runDiff)
 import Circuit.Diff.Jet (constant, taylor)
-import Control.Category
 import NumHask.Algebra.Additive (Additive (..))
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Multiplicative (..))
 import NumHask.Data.Integral (FromInteger (..))
-import Prelude hiding (fromInteger, id, (*), (+), (.))
-import Prelude qualified as P
+import NumHask.Prelude
 
 -- | Reverse derivative combinator.
 --
@@ -101,13 +99,13 @@ terminalD :: (Additive a) => Diff p a ()
 terminalD = Diff $ \_ -> ((), \_ -> zero)
 
 -- | Helper: compare two values up to a tolerance.
-near :: (P.Fractional a, P.Ord a) => a -> a -> a -> Bool
-near tol x y = P.abs (x P.- y) < tol
+near :: (Fractional a, Ord a, Absolute a, Subtractive a) => a -> a -> a -> Bool
+near tol x y = abs (x - y) < tol
 
 -- | [RD.1] The reverse derivative preserves addition: @R[f + g] = R[f] + R[g]@
 -- and @R[0] = 0@.
 rdcAdditive ::
-  (Additive a, Additive b, P.Fractional a, P.Ord a) =>
+  (Additive a, Additive b, Fractional a, Ord a, Absolute a, Subtractive a) =>
   a ->
   Diff p a b ->
   Diff p a b ->
@@ -126,7 +124,7 @@ rdcAdditive tol f g a db1 db2 =
 -- argument: @R[f](a, db1 + db2) = R[f](a, db1) + R[f](a, db2)@ and
 -- @R[f](a, 0) = 0@.
 rdcLinear ::
-  (Additive a, Additive b, P.Fractional a, P.Ord a) =>
+  (Additive a, Additive b, Fractional a, Ord a, Absolute a, Subtractive a) =>
   a ->
   Diff p a b ->
   a ->
@@ -143,13 +141,13 @@ rdcLinear tol f a db1 db2 db3 =
 
 -- | [RD.3] @R[id] = π1@: the reverse derivative of the identity is the
 -- second projection (the cotangent itself).
-rdcIdentity :: (P.Fractional a, P.Ord a) => a -> a -> a -> Bool
+rdcIdentity :: (Fractional a, Ord a, Absolute a, Subtractive a) => a -> a -> a -> Bool
 rdcIdentity tol a da = near tol (rdc id (a, da)) da
 
 -- | [RD.3] @R[π0] = ι0 ∘ π1@: the reverse derivative of first projection
 -- returns the cotangent in the first component and zero in the second.
 rdcFst ::
-  (Additive b, P.Fractional a, P.Ord a, P.Eq b) =>
+  (Additive b, Fractional a, Ord a, Absolute a, Subtractive a, Eq b) =>
   a ->
   (a, b) ->
   a ->
@@ -161,7 +159,7 @@ rdcFst tol x da =
 -- | [RD.3] @R[π1] = ι1 ∘ π1@: the reverse derivative of second projection
 -- returns zero in the first component and the cotangent in the second.
 rdcSnd ::
-  (Additive a, P.Fractional a, P.Ord a, P.Eq b) =>
+  (Additive a, Fractional a, Ord a, Absolute a, Subtractive a, Eq b) =>
   a ->
   (a, b) ->
   b ->
@@ -173,7 +171,7 @@ rdcSnd tol x db =
 -- | [RD.4] Reverse derivative of a pairing:
 -- @R[<f, g>](a, (db, dc)) = R[f](a, db) + R[g](a, dc)@.
 rdcPairing ::
-  (Additive a, Additive b, Additive c, P.Fractional a, P.Ord a) =>
+  (Additive a, Additive b, Additive c, Fractional a, Ord a, Absolute a, Subtractive a) =>
   a ->
   Diff p a b ->
   Diff p a c ->
@@ -188,7 +186,7 @@ rdcPairing tol f g a (db1, dc1) (db2, dc2) =
 
 -- | [RD.4] Reverse derivative of the terminal morphism is zero.
 rdcTerminal ::
-  (Additive a, P.Fractional a, P.Ord a) =>
+  (Additive a, Fractional a, Ord a, Absolute a, Subtractive a) =>
   a ->
   a ->
   Bool
@@ -197,7 +195,7 @@ rdcTerminal tol a = near tol (rdc terminalD (a, ())) zero
 -- | [RD.5] Reverse chain rule:
 -- @R[g ∘ f](a, dc) = R[f](a, R[g](f a, dc))@.
 rdcChain ::
-  (P.Fractional a, P.Ord a) =>
+  (Fractional a, Ord a, Absolute a, Subtractive a) =>
   a ->
   Diff p a b ->
   Diff p b c ->
@@ -215,7 +213,7 @@ rdcChain tol f g a dc =
 -- This formulation restricts to endomorphisms @f : A → A@ so that the scalar
 -- @c@ and the input/output cotangents all live in the same carrier.
 rdcHomogeneous ::
-  (Multiplicative a, P.Fractional a, P.Ord a) =>
+  (Multiplicative a, Fractional a, Ord a, Absolute a, Subtractive a) =>
   a ->
   Diff p a a ->
   a ->
@@ -235,7 +233,7 @@ rdcHomogeneous tol f a db c =
 -- the base carrier @a@ and at the 'Jet' carrier used for the scalar-line Taylor
 -- expansion.
 rdcMixedPartials ::
-  (ExpField a, TrigField a, FromInteger a, P.Fractional a, P.Ord a) =>
+  (ExpField a, TrigField a, FromInteger a, Fractional a, Ord a, Absolute a, Subtractive a) =>
   a ->
   (forall b. (ExpField b, TrigField b, FromInteger b) => (b, b) -> b) ->
   (a, a) ->

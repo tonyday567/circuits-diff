@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -31,7 +32,7 @@ import Circuit.Diff.Circuit ()
 import Circuit.Diff.Pullback (Pullback (..))
 import Circuit.Net (Net (..), lift)
 import Circuit.SMC (SMC (..))
-import Prelude hiding (id, (.))
+import NumHask.Prelude
 
 -- $setup
 -- >>> import Circuit.Category ((.))

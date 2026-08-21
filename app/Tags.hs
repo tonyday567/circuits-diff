@@ -8,7 +8,6 @@ where
 
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff)
 import NumHask.Prelude
-import Prelude ()
 
 near :: Double -> Double -> Bool
 near x y = abs (x - y) < 1e-9

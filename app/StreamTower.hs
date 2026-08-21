@@ -1,3 +1,5 @@
+{-# LANGUAGE RebindableSyntax #-}
+
 -- | Stream-tower oracles.
 --
 -- The elementary-function recurrences in 'Circuit.Diff.Jet' are now driven by
@@ -16,8 +18,7 @@ import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Divisive (recip))
 import NumHask.Free.Carriers (FieldStar (..))
 import System.Exit (exitFailure)
-import Prelude hiding (cos, exp, log, recip, sin, sqrt)
-import Prelude qualified as P
+import NumHask.Prelude
 
 eps :: Double
 eps = 1e-9
@@ -27,8 +28,8 @@ near x y = abs (x - y) < eps
 
 nearList :: [Double] -> [Double] -> Bool
 nearList xs ys =
-  P.length xs == P.length ys
-    && P.all (uncurry near) (P.zip xs ys)
+  length xs == length ys
+    && all (uncurry near) (zip xs ys)
 
 assertList :: String -> [Double] -> [Double] -> IO ()
 assertList name got expected =
@@ -39,19 +40,19 @@ assertList name got expected =
       exitFailure
 
 fact :: Int -> Double
-fact n = P.fromInteger (P.product [1 .. P.fromIntegral n])
+fact n = fromInteger (product [1 .. fromIntegral n])
 
 -- | Direct reference implementation of the exp recurrence (the old list style),
 -- kept here as an independent oracle for the new process-based generator.
 oldExpSeries :: [Double] -> [Double]
 oldExpSeries [] = []
 oldExpSeries (u0 : us) =
-  let n = P.length us
-      vs = P.map go [0 .. n]
+  let n = length us
+      vs = map go [0 .. n]
       go 0 = exp u0
       go m =
-        let m' = P.fromInteger (P.toInteger m)
-         in (1.0 / m') * sum [P.fromInteger (P.toInteger (m P.- j)) * (vs P.!! j) * (us P.!! (m P.- j P.- 1)) | j <- [0 .. m P.- 1]]
+        let m' = fromInteger (fromIntegral m)
+         in (1.0 / m') * sum [fromInteger (fromIntegral (m - j)) * (vs !! j) * (us !! (m - j - 1)) | j <- [0 .. m - 1]]
    in vs
 
 -- | Coefficients of exp(a + h): exp(a) / k!
@@ -62,7 +63,7 @@ expVariable n a = [exp a / fact k | k <- [0 .. n]]
 sinVariable :: Int -> Double -> [Double]
 sinVariable n a = [sinDeriv k / fact k | k <- [0 .. n]]
   where
-    sinDeriv k = case P.mod k 4 of
+    sinDeriv k = case mod k 4 of
       0 -> sin a
       1 -> cos a
       2 -> negate (sin a)
@@ -71,7 +72,7 @@ sinVariable n a = [sinDeriv k / fact k | k <- [0 .. n]]
 cosVariable :: Int -> Double -> [Double]
 cosVariable n a = [cosDeriv k / fact k | k <- [0 .. n]]
   where
-    cosDeriv k = case P.mod k 4 of
+    cosDeriv k = case mod k 4 of
       0 -> cos a
       1 -> negate (sin a)
       2 -> negate (cos a)
@@ -79,13 +80,13 @@ cosVariable n a = [cosDeriv k / fact k | k <- [0 .. n]]
 
 -- | Coefficients of 1/(a + h): (-1)^k / a^(k+1).
 recipVariable :: Int -> Double -> [Double]
-recipVariable n a = [((-1) ^ k) / (a ^ (k P.+ 1)) | k <- [0 .. n]]
+recipVariable n a = [((-1) ^ k) / (a ^ (k + 1)) | k <- [0 .. n]]
 
 -- | Coefficients of sqrt(a + h) via the binomial series.
 sqrtVariable :: Int -> Double -> [Double]
 sqrtVariable n a =
   let sa = sqrt a
-      binom k = P.product [1 / 2 - P.fromInteger (P.toInteger j) | j <- [0 .. k P.- 1]] / fact k
+      binom k = product [1 / 2 - fromInteger (fromIntegral j) | j <- [0 .. k - 1]] / fact k
    in [sa * binom k / (a ^ k) | k <- [0 .. n]]
 
 -- | Fibonacci recurrence as a tower.
@@ -95,14 +96,14 @@ fibRec n = go n
     go 0 = [0]
     go 1 = [0, 1]
     go m =
-      let prev = go (m P.- 1)
-       in prev ++ [prev P.!! (m P.- 1) + prev P.!! (m P.- 2)]
+      let prev = go (m - 1)
+       in prev ++ [prev !! (m - 1) + prev !! (m - 2)]
 
 -- | Strictly-lower-triangular companion matrix for the Fibonacci recurrence.
 -- Row @i@ (for @i >= 2@) has ones in columns @i-1@ and @i-2@.
 fibCompanion :: Int -> [[Double]]
 fibCompanion n =
-  [ [if i >= 2 && (j == i P.- 1 || j == i P.- 2) then 1.0 else 0.0 | j <- [0 .. n]]
+  [ [if i >= 2 && (j == i - 1 || j == i - 2) then 1.0 else 0.0 | j <- [0 .. n]]
   | i <- [0 .. n]
   ]
 
@@ -128,7 +129,7 @@ runStreamTowerTests = do
   let order = 12
       coeffs = fibRec order
       l = fibCompanion order
-      b = P.map FieldStar (P.take (order P.+ 1) ([0, 1] ++ P.repeat 0))
-      mat = fromLists (P.map (P.map FieldStar) l)
-      solved = P.map (\(FieldStar x) -> x) (matVec (starMatrix mat) b)
+      b = map FieldStar (take (order + 1) ([0, 1] ++ repeat 0))
+      mat = fromLists (map (map FieldStar) l)
+      solved = map (\(FieldStar x) -> x) (matVec (starMatrix mat) b)
   assertList "starMatrix solves Fibonacci recurrence" solved coeffs

@@ -21,8 +21,7 @@ where
 import Circuit.Diff (Diff (..), runDiff)
 import NumHask.Algebra.Additive (Additive (..), Subtractive (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..))
-import Prelude hiding (negate, recip, (*), (+), (-), (/))
-import Prelude qualified as P
+import NumHask.Prelude
 
 -- | The identity differentiable function @x ↦ x@.
 varDiff :: Diff p a a
@@ -30,7 +29,7 @@ varDiff = Diff (\s -> (s, id))
 
 -- | Constant differentiable function.
 constDiff :: (Additive a) => b -> Diff p a b
-constDiff b = Diff (P.const (b, P.const zero))
+constDiff b = Diff (const (b, const zero))
 
 -- | Newton iteration for solving @f(x) = target@.
 --
@@ -40,14 +39,14 @@ newton ::
   Diff p a a ->
   a ->
   a ->
-  P.Int ->
+  Int ->
   a
 newton f target x0 n =
   let step x =
         let (y, pb) = runDiff f x
             dy = pb one
          in x - (y - target) / dy
-   in (P.!! n) (P.iterate step x0)
+   in (!! n) (iterate step x0)
 
 -- | Newton iteration for the inverse value: find @x@ such that @f(x) = y@.
 inverseN ::
@@ -55,7 +54,7 @@ inverseN ::
   Diff p a a ->
   a ->
   a ->
-  P.Int ->
+  Int ->
   a
 inverseN f y = newton f y
 
@@ -66,6 +65,6 @@ implicit1N ::
   (Subtractive b, Divisive b) =>
   Diff p b b ->
   b ->
-  P.Int ->
+  Int ->
   b
 implicit1N g = newton g zero

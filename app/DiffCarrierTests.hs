@@ -1,3 +1,5 @@
+{-# LANGUAGE RebindableSyntax #-}
+
 -- | Carrier-level oracles for jets, inverse functions, RDC axioms, and
 -- surface-of-revolution curvature.  These originally lived in @numhask-diff@.
 module DiffCarrierTests
@@ -25,8 +27,7 @@ import NumHask.Algebra.Field (ExpField, TrigField)
 import NumHask.Algebra.Field qualified as NHField
 import NumHask.Algebra.Multiplicative (Multiplicative (..))
 import System.Exit (exitFailure)
-import Prelude hiding (negate, (*), (+), (-), (/))
-import Prelude qualified as P
+import NumHask.Prelude
 
 eps :: Double
 eps = 1e-10
@@ -41,7 +42,7 @@ assert msg ok =
 
 near :: [Double] -> [Double] -> Bool
 near xs ys =
-  P.length xs == P.length ys && P.all (\(x, y) -> abs (x - y) < eps) (P.zip xs ys)
+  length xs == length ys && all (\(x, y) -> abs (x - y) < eps) (zip xs ys)
 
 runDiffCarrierTests :: IO ()
 runDiffCarrierTests = do
@@ -76,7 +77,7 @@ runDiffCarrierTests = do
 
   assert "inverse: sqrt via x²" $
     let root = inverseN (x * x) 2.0 1.5 10
-     in abs (root - P.sqrt 2.0) < 1e-12
+     in abs (root - sqrt 2.0) < 1e-12
 
   assert "inverse: log via exp" $
     let root = inverseN (NHField.exp x) (NHField.exp 1.0) 0.5 10
@@ -88,8 +89,8 @@ runDiffCarrierTests = do
         y = varDiff
         g = constDiff xVal * constDiff xVal + y * y - one
         root = implicit1N g y0 10
-        expected = P.sqrt (1.0 P.- xVal P.* xVal)
-     in abs (root P.- expected) < 1e-12
+        expected = sqrt (1.0 - xVal * xVal)
+     in abs (root - expected) < 1e-12
 
   putStrLn "RDC axiom tests"
 

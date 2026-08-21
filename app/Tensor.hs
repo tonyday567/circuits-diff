@@ -21,7 +21,6 @@ import Harpie.Fixed (Array)
 import Harpie.Fixed qualified as F
 import Harpie.Shape (KnownNats)
 import NumHask.Prelude
-import Prelude qualified as P
 
 -- ---------------------------------------------------------------------------
 -- Helpers
@@ -32,7 +31,7 @@ squareFromLists xss = F.array (concat xss)
 
 squareToLists :: forall n. (KnownNat n) => Square n Double -> [[Double]]
 squareToLists a =
-  let n = P.fromIntegral (natVal (Proxy @n))
+  let n = fromEnum (natVal (Proxy @n))
    in [[a F.! [i, j] | j <- [0 .. n - 1]] | i <- [0 .. n - 1]]
 
 arraySum :: (KnownNats s) => Array s Double -> Double
@@ -46,12 +45,12 @@ nearFD x y = abs (x - y) < 1e-4
 
 nearM :: forall n. (KnownNat n) => Square n Double -> Square n Double -> Bool
 nearM a b =
-  let n = P.fromIntegral (natVal (Proxy @n))
+  let n = fromEnum (natVal (Proxy @n))
    in and [nearS (a F.! [i, j]) (b F.! [i, j]) | i <- [0 .. n - 1], j <- [0 .. n - 1]]
 
 nearMFD :: forall n. (KnownNat n) => Square n Double -> Square n Double -> Bool
 nearMFD a b =
-  let n = P.fromIntegral (natVal (Proxy @n))
+  let n = fromEnum (natVal (Proxy @n))
    in and [nearFD (a F.! [i, j]) (b F.! [i, j]) | i <- [0 .. n - 1], j <- [0 .. n - 1]]
 
 assertS :: String -> Double -> Double -> IO ()

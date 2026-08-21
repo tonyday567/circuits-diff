@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE RebindableSyntax #-}
 
 -- | Array AD on top of 'Harpie.Fixed.Array' and 'Circuit.Mat.Square'.
 --
@@ -43,8 +44,7 @@ import NumHask.Algebra.Additive (Additive (..), Subtractive (..))
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..), recip)
 import NumHask.Data.Integral (FromInteger (..))
-import Prelude hiding (abs, cos, exp, fromInteger, fromRational, log, recip, sin, sqrt, tanh, (*), (+), (-), (/))
-import Prelude qualified as P
+import NumHask.Prelude
 
 -- ---------------------------------------------------------------------------
 -- Forward-mode tensor towers

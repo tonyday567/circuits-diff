@@ -22,7 +22,6 @@ where
 
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import NumHask.Prelude
-import Prelude ()
 
 -- | Adjoint of @J : a -> b@ with respect to domain metric @g_a@ and
 -- codomain metric @g_b@.

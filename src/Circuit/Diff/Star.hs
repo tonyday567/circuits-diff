@@ -1,3 +1,5 @@
+{-# LANGUAGE RebindableSyntax #-}
+
 -- | The Schur-complement bridge — 'trace' solved by 'starMatrix'.
 --
 -- This is where the three floors actually touch.  A 'Diff knot body
@@ -46,8 +48,7 @@ import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Multiplicative qualified as NHM
 import NumHask.Algebra.Ring qualified as NHR
 import NumHask.Free.Carriers (FieldStar (..))
-import Prelude hiding (id, (.))
-import Prelude qualified as P
+import NumHask.Prelude
 
 -- $setup
 -- >>> import Circuit.Body (Body (..))
@@ -186,7 +187,7 @@ traceStarMatrixD x0 n (Diff body) =
 -- 'Merge (->) FieldStar' and 'Zero (->) FieldStar'.  Deliberately orphan: this
 -- module is the federation seam between @circuits@ and @numhask-free@.
 instance Circuit.Dagger.Merge (->) FieldStar where
-  plus (FieldStar x, FieldStar y) = FieldStar (x P.+ y)
+  plus (FieldStar x, FieldStar y) = FieldStar (x + y)
 
 instance Circuit.Dagger.Zero (->) FieldStar where
   zero _ = FieldStar 0

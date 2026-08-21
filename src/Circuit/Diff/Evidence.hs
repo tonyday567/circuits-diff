@@ -1,3 +1,4 @@
+{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE TypeFamilies #-}
 
 -- | Star-elimination evidence as a channel type.
@@ -34,8 +35,7 @@ import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Multiplicative qualified as NHM
 import NumHask.Algebra.Ring qualified as NHR
 import NumHask.Free.Carriers (FieldStar (..))
-import Prelude hiding (id, (.))
-import Prelude qualified as P
+import NumHask.Prelude hiding (Scalar)
 
 -- | Scalar carrier associated with a star-channel state type.
 --
@@ -121,7 +121,7 @@ listStarChannel dim =
           starNegate = fmap NHA.negate,
           starSelfMatrix = \n f ->
             let cols = [f (basis n i) | i <- [0 .. n - 1]]
-             in fromLists [[col P.!! k | col <- cols] | k <- [0 .. n - 1]],
+             in fromLists [[col !! k | col <- cols] | k <- [0 .. n - 1]],
           starApplyMatrix = matVec,
           starMatrix = MD.starMatrix
         }

@@ -29,7 +29,6 @@ import Circuit.Diff.Chart
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff)
 import Circuit.Diff.Metric (adjointWith)
 import NumHask.Prelude
-import Prelude ()
 
 -- | Basis vector e1 in R^2.
 basis1 :: (Double, Double)
