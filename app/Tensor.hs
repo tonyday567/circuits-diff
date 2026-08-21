@@ -5,14 +5,14 @@
 module Tensor (runTensorTests) where
 
 import Circuit.Diff (runDiff)
-import Circuit.Diff.Jet (Jet (..), variable)
-import Circuit.Diff.Tensor
+import Circuit.Diff.Array
   ( elementwiseTower,
     matMulD,
     sigmoidD,
     tanhD,
     tensorTaylor,
   )
+import Circuit.Diff.Jet (Jet (..), variable)
 import Circuit.Mat.Square (Square)
 import Data.Foldable (foldl')
 import Data.Proxy (Proxy (..))

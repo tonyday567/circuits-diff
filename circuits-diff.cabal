@@ -68,7 +68,7 @@ library
     Circuit.Diff.RDC
     Circuit.Diff.Star
     Circuit.Diff.Taylor
-    Circuit.Diff.Tensor
+    Circuit.Diff.Array
 
   build-depends:
     base >=4.20 && <5,

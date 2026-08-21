@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 
--- | Tensor AD on top of 'Harpie.Fixed.Array' and 'Circuit.Mat.Square'.
+-- | Array AD on top of 'Harpie.Fixed.Array' and 'Circuit.Mat.Square'.
 --
 -- This module provides:
 --
@@ -13,7 +13,7 @@
 -- The generic 'Multiplicative' instance of 'Diff' is /not/ used for matrix
 -- multiplication because its product-rule pullback is the wrong adjoint for
 -- non-commutative multiplication.
-module Circuit.Diff.Tensor
+module Circuit.Diff.Array
   ( -- * Forward-mode tensor towers
     tensorTaylor,
     tensorDerivativeN,
