@@ -25,13 +25,14 @@ module Circuit.Diff.Backprop
   )
 where
 
-import Circuit.Body (Body (..))
 import Circuit.Bimonoid (CopyT (..), DiscardT (..), MergeT (..), ZeroT (..))
+import Circuit.Body (Body (..))
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Diff.Circuit ()
 import Circuit.Diff.Pullback (Pullback (..))
 import Circuit.Net (Net (..), lift)
-import Circuit.SMC (SMC (..))
+import Circuit.SMC (SMC, SigPar (..), SigSwap (..))
+import Circuit.Syntax (SigCompose (..), Syntax (..), (:+:) (..))
 import NumHask.Prelude
 
 -- $setup
@@ -129,21 +130,22 @@ linearizeNet n a = case n of
       x ->
       (y, Net (,) Pullback y x)
     linearizeSMC s x = case s of
-      SMCLift d ->
+      Lift d ->
         let (y, pb) = runDiff d x
          in (y, lift (Pullback pb))
-      SMCCompose g f ->
-        let (b, f') = linearizeSMC f x
-            (c, g') = linearizeSMC g b
-         in (c, Compose f' g')
-      SMCPar f g ->
-        let (x1, x2) = x
-            (b, f') = linearizeSMC f x1
-            (d, g') = linearizeSMC g x2
-         in ((b, d), Par f' g')
-      SMCSwap ->
-        let (u, v) = x
-         in ((v, u), FromSMC SMCSwap)
+      Op op -> case op of
+        L (SigCompose g f) ->
+          let (b, f') = linearizeSMC f x
+              (c, g') = linearizeSMC g b
+           in (c, Compose f' g')
+        R (L (SigPar f g)) ->
+          let (x1, x2) = x
+              (b, f') = linearizeSMC f x1
+              (d, g') = linearizeSMC g x2
+           in ((b, d), Par f' g')
+        R (R SigSwap) ->
+          let (u, v) = x
+           in ((v, u), FromSMC (Op (R (R SigSwap))))
 
 -- | Pointwise linearization over the core 'Body' language.
 --

@@ -3,6 +3,7 @@ packages:
   ../circuits/circuits.cabal
   ../circuits-tools/circuits-tools.cabal
   ../circuits-mat/circuits-mat.cabal
+  ../circuits-prob/circuits-prob.cabal
   ../harpie/harpie.cabal
   ../numhask/numhask.cabal
 
