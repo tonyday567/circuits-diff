@@ -40,8 +40,8 @@ where
 
 import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..))
-import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
-import Circuit.Dagger qualified as CD
+import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
+import Circuit.Bimonoid qualified as CB
 import Circuit.Diff (Diff (..), runDiff)
 import Circuit.Tensor (Action (..), Tensor (..))
 import Prelude hiding (id, (.))
@@ -49,7 +49,7 @@ import Prelude hiding (id, (.))
 -- $setup
 -- >>> import Circuit.Diff.Param
 -- >>> import Circuit.Category (Category (..))
--- >>> import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
+-- >>> import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 -- >>> import Circuit.Tensor (Action (..), Tensor (..))
 -- >>> import Circuit.Diff (Diff (..), Diff', runDiff)
 -- >>> import Prelude hiding (id, (.))
@@ -109,7 +109,7 @@ toPrim (DiffP f) = TensorPrim (\p a -> fst (f p a)) (\p a db -> snd (f p a) db)
 --
 -- Parameter gradients from both composed arrows accumulate (not just the
 -- outer one).  @addParam@ contributes @dpG = dy@; @dblParam@ contributes
--- @dpF = dc@; composition must sum them via 'CD.plus'.
+-- @dpF = dc@; composition must sum them via 'CB.plus'.
 --
 -- >>> let addParam = DiffP (\p x -> (x + p, \dy -> (dy, dy))) :: DiffP Int Int Int
 -- >>> let dblParam = DiffP (\p b -> (2 * b, \dc -> (2 * dc, dc))) :: DiffP Int Int Int
@@ -119,7 +119,7 @@ toPrim (DiffP f) = TensorPrim (\p a -> fst (f p a)) (\p a db -> snd (f p a) db)
 -- >>> pb 1
 -- (2,3)
 instance (MergeZero (->) p) => Category (DiffP p) where
-  id = DiffP $ \_ a -> (a, (,CD.zero ()))
+  id = DiffP $ \_ a -> (a, (,CB.zero ()))
   {-# INLINE id #-}
 
   DiffP f . DiffP g = DiffP $ \p a ->
@@ -129,7 +129,7 @@ instance (MergeZero (->) p) => Category (DiffP p) where
           \dc ->
             let (db, dpF) = fBack dc
                 (da, dpG) = gBack db
-             in (da, CD.plus (dpF, dpG))
+             in (da, CB.plus (dpF, dpG))
         )
   {-# INLINE (.) #-}
 
@@ -143,13 +143,13 @@ instance (MergeZero (->) p) => Category (DiffP p) where
 -- instance carries the same constraint even though the structural maps
 -- themselves ignore the parameter.
 instance (MergeZero (->) p) => Channel (,) (DiffP p) where
-  assoc = DiffP $ \_ ((a, b), c) -> ((a, (b, c)), \(da, (db, dc)) -> (((da, db), dc), CD.zero ()))
+  assoc = DiffP $ \_ ((a, b), c) -> ((a, (b, c)), \(da, (db, dc)) -> (((da, db), dc), CB.zero ()))
   {-# INLINE assoc #-}
 
-  assoc' = DiffP $ \_ (a, (b, c)) -> (((a, b), c), \((da, db), dc) -> ((da, (db, dc)), CD.zero ()))
+  assoc' = DiffP $ \_ (a, (b, c)) -> (((a, b), c), \((da, db), dc) -> ((da, (db, dc)), CB.zero ()))
   {-# INLINE assoc' #-}
 
-  slide = DiffP $ \_ (a, (b, c)) -> ((b, (a, c)), \(db, (da, dc)) -> ((da, (db, dc)), CD.zero ()))
+  slide = DiffP $ \_ (a, (b, c)) -> ((b, (a, c)), \(db, (da, dc)) -> ((da, (db, dc)), CB.zero ()))
   {-# INLINE slide #-}
 
 ----------------------------------------------------------------------
@@ -178,20 +178,20 @@ instance (MergeZero (->) p) => Tensor (,) (DiffP p) where
           \(db, dd) ->
             let (da, dpF) = fBack db
                 (dc, dpG) = gBack dd
-             in ((da, dc), CD.plus (dpF, dpG))
+             in ((da, dc), CB.plus (dpF, dpG))
         )
   {-# INLINE par #-}
-  unitl = DiffP $ \_ ((), a) -> (a, \da -> (((), da), CD.zero ()))
+  unitl = DiffP $ \_ ((), a) -> (a, \da -> (((), da), CB.zero ()))
   {-# INLINE unitl #-}
-  unitl' = DiffP $ \_ a -> (((), a), \((), da) -> (da, CD.zero ()))
+  unitl' = DiffP $ \_ a -> (((), a), \((), da) -> (da, CB.zero ()))
   {-# INLINE unitl' #-}
-  unitr = DiffP $ \_ (a, ()) -> (a, \da -> ((da, ()), CD.zero ()))
+  unitr = DiffP $ \_ (a, ()) -> (a, \da -> ((da, ()), CB.zero ()))
   {-# INLINE unitr #-}
-  unitr' = DiffP $ \_ a -> ((a, ()), \(da, ()) -> (da, CD.zero ()))
+  unitr' = DiffP $ \_ a -> ((a, ()), \(da, ()) -> (da, CB.zero ()))
   {-# INLINE unitr' #-}
 
 instance (MergeZero (->) p) => Action (,) (DiffP p) where
-  swap = DiffP $ \_ (a, b) -> ((b, a), \(db, da) -> ((da, db), CD.zero ()))
+  swap = DiffP $ \_ (a, b) -> ((b, a), \(db, da) -> ((da, db), CB.zero ()))
   {-# INLINE swap #-}
 
 ----------------------------------------------------------------------
@@ -205,11 +205,11 @@ instance (MergeZero (->) p) => Action (,) (DiffP p) where
 -- >>> pb (1, 2)
 -- (3,())
 instance (Merge (->) a, Zero (->) p) => Copy (DiffP p) a where
-  copy = DiffP $ \_ a -> ((a, a), \(da1, da2) -> (CD.plus (da1, da2), CD.zero ()))
+  copy = DiffP $ \_ a -> ((a, a), \(da1, da2) -> (CB.plus (da1, da2), CB.zero ()))
   {-# INLINE copy #-}
 
 instance (Zero (->) a, Zero (->) p) => Discard (DiffP p) a where
-  discard = DiffP $ \_ _ -> ((), const (CD.zero (), CD.zero ()))
+  discard = DiffP $ \_ _ -> ((), const (CB.zero (), CB.zero ()))
   {-# INLINE discard #-}
 
 -- | Add in 'DiffP': forward add, backward copy.  The parameter gradient is
@@ -219,11 +219,11 @@ instance (Zero (->) a, Zero (->) p) => Discard (DiffP p) a where
 -- >>> pb 1
 -- ((1,1),())
 instance (Merge (->) a, Zero (->) p) => Merge (DiffP p) a where
-  plus = DiffP $ \_ (a, b) -> (CD.plus (a, b), \d -> ((d, d), CD.zero ()))
+  plus = DiffP $ \_ (a, b) -> (CB.plus (a, b), \d -> ((d, d), CB.zero ()))
   {-# INLINE plus #-}
 
 instance (Zero (->) a, Zero (->) p) => Zero (DiffP p) a where
-  zero = DiffP $ \_ () -> (CD.zero (), const ((), CD.zero ()))
+  zero = DiffP $ \_ () -> (CB.zero (), const ((), CB.zero ()))
   {-# INLINE zero #-}
 
 ----------------------------------------------------------------------

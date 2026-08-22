@@ -29,8 +29,8 @@ where
 
 import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
-import Circuit.Dagger (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
-import Circuit.Dagger qualified as CD
+import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
+import Circuit.Bimonoid qualified as CB
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Tensor (Action (..), Tensor (..))
 import Data.Bifunctor
@@ -40,7 +40,7 @@ import NumHask.Algebra.Ring qualified as NHR
 import Prelude hiding (id, (.))
 
 -- $setup
--- >>> import Circuit.Dagger (Copy (..), Merge (..))
+-- >>> import Circuit.Bimonoid (Copy (..), Merge (..))
 -- >>> import Circuit.Tensor (Action (..), Tensor (..))
 
 -- | 'Circuit.Category.Category' for 'Diff'.
@@ -202,16 +202,16 @@ instance Traced Either (Diff p) where
 -- | Copy in D: the pullback is 'plus' (fan-in on the backward pass).
 --
 -- >>> import Circuit.Tensor (Action(..))
--- >>> import Circuit.Dagger (Copy(..), Merge(..))
+-- >>> import Circuit.Bimonoid (Copy(..), Merge(..))
 -- >>> let (_, pb) = runDiff (copy :: Diff' Int (Int, Int)) 5
 -- >>> pb (1, 2)
 -- 3
 instance (Merge (->) a) => Copy (Diff p) a where
-  copy = Diff (\a -> ((a, a), CD.plus))
+  copy = Diff (\a -> ((a, a), CB.plus))
   {-# INLINE copy #-}
 
 instance (Zero (->) a) => Discard (Diff p) a where
-  discard = Diff (const ((), \() -> CD.zero ()))
+  discard = Diff (const ((), \() -> CB.zero ()))
   {-# INLINE discard #-}
 
 -- | Add in D: the pullback is 'copy' (fan-out on the backward pass).
@@ -220,11 +220,11 @@ instance (Zero (->) a) => Discard (Diff p) a where
 -- >>> pb 1
 -- (1,1)
 instance (Merge (->) a) => Merge (Diff p) a where
-  plus = Diff (\(a, b) -> (CD.plus (a, b), \d -> (d, d)))
+  plus = Diff (\(a, b) -> (CB.plus (a, b), \d -> (d, d)))
   {-# INLINE plus #-}
 
 instance (Zero (->) a) => Zero (Diff p) a where
-  zero = Diff (\() -> (CD.zero (), const ()))
+  zero = Diff (\() -> (CB.zero (), const ()))
   {-# INLINE zero #-}
 
 -- | Monoidal product for Diff: independent wires, no additive constraint.
@@ -323,7 +323,7 @@ traceStarFrom x0 n (Diff body) = Diff $ \b ->
       a = iterate stepFwd x0 !! n
       ((_, c), backward) = body (a, b)
       -- Probe the channel self-coupling once; star it in closed form
-      aStar = NHR.star (fst (backward (NHM.one, CD.zero ())))
+      aStar = NHR.star (fst (backward (NHM.one, CB.zero ())))
       -- Backward: exact in two more probes — no iteration
       pullback dc =
         let cdc = fst (backward (NHA.zero, dc))
@@ -379,7 +379,7 @@ traceNFrom x0 n (Diff body) = Diff $ \b ->
       -- Backward: iterate from zero, extract result once
       pullback dc =
         let stepBwd d = fst (backward (d, dc))
-            da = iterate stepBwd (CD.zero ()) !! n
+            da = iterate stepBwd (CB.zero ()) !! n
          in snd (backward (da, dc))
    in (c, pullback)
 
@@ -398,7 +398,7 @@ traceNFrom x0 n (Diff body) = Diff $ \b ->
 -- >>> pb 1.0
 -- 7.0
 quadD :: Diff p Double Double
-quadD = CD.plus . par sq lin . CD.copy
+quadD = CB.plus . par sq lin . CB.copy
   where
     sq = Diff (\x -> (2 * x * x, \d -> 4 * x * d))
     lin = Diff (\x -> (3 * x + 5, (3 *)))

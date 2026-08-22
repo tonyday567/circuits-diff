@@ -27,7 +27,7 @@ where
 
 import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
-import Circuit.Dagger (Copy (..), Discard (..), Merge (..), Zero (..))
+import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), Zero (..))
 import Circuit.Layer (run)
 import Circuit.Net (Net)
 import Circuit.Tensor (Action (..), Tensor (..))
@@ -36,7 +36,7 @@ import Prelude hiding (id, (.))
 
 -- $setup
 -- >>> import Circuit.Category (Category (..))
--- >>> import Circuit.Dagger (Copy (..), Discard (..), Merge (..), Zero (..))
+-- >>> import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), Zero (..))
 -- >>> import Circuit.Channel (Channel (..), Strength (..), Traced (..))
 -- >>> import Circuit.Tensor (Action (..), Tensor (..))
 -- >>> import Circuit.Net (Net (..))

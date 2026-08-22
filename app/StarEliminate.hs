@@ -37,7 +37,7 @@ assert name got expected =
 --
 -- The trace equation is @dx = 0.5*dx + dc@, solved by @dx = 2*dc@.
 -- Then @db = dx + 2*dc = 4*dc@.
-scalarKnot :: Body (,) Pullback (StarChannel FieldStar) FieldStar FieldStar
+scalarKnot :: Body (,) (StarChannel FieldStar) Pullback FieldStar FieldStar
 scalarKnot =
   Body $
     withStarChannel fieldStarChannel $
@@ -109,7 +109,7 @@ runStarEliminateTests = do
       innerBody = Body (withStarChannelDiff fieldStarChannel innerBodyRaw)
       (FieldStar y, g) = linearizeBody innerBody (FieldStar 4.0)
       gElim = solveStarBody g
-      (_, FieldStar gLazy) = runPullback (runBody g) (fieldStarChannel, FieldStar 1.0)
+      (_, FieldStar gLazy) = runPullback (morphism g) (fieldStarChannel, FieldStar 1.0)
       FieldStar gElimVal = runPullback gElim (FieldStar 1.0)
   assert "lazy-knot value" y 4.0
   assert "lazy-knot gradient" gLazy 1.0

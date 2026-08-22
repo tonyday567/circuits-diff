@@ -37,8 +37,8 @@ module Circuit.Diff.Star
 where
 
 import Circuit.Body (Body (..))
-import Circuit.Dagger (Merge, MergeZero, Zero)
-import Circuit.Dagger qualified as CD
+import Circuit.Bimonoid (Merge, MergeZero, Zero)
+import Circuit.Bimonoid qualified as CB
 import Circuit.Diff.Circuit (Diff (..), traceStarFrom)
 import Circuit.Diff.Evidence (StarChannel (..))
 import Circuit.Diff.Pullback (Pullback (..))
@@ -93,7 +93,7 @@ traceStarMatrix x0 n (Diff body) = Diff $ \b ->
       -- Channel self-coupling, column i = backward probe at e_i
       zeroV = replicate dim NHA.zero
       basis i = [if k == i then NHM.one else NHA.zero | k <- [0 .. dim - 1]]
-      cols = [fst (backward (basis i, CD.zero ())) | i <- [0 .. dim - 1]]
+      cols = [fst (backward (basis i, CB.zero ())) | i <- [0 .. dim - 1]]
       aMat = fromLists [[col !! k | col <- cols] | k <- [0 .. dim - 1]]
       -- star A — Gaussian elimination / Warshall / Floyd–Warshall /
       -- state elimination, depending on the carrier
@@ -186,10 +186,10 @@ traceStarMatrixD x0 n (Diff body) =
 -- the wiring arrow.  For 'Pullback FieldStar' those constraints bottom out in
 -- 'Merge (->) FieldStar' and 'Zero (->) FieldStar'.  Deliberately orphan: this
 -- module is the federation seam between @circuits@ and @numhask-free@.
-instance Circuit.Dagger.Merge (->) FieldStar where
+instance Circuit.Bimonoid.Merge (->) FieldStar where
   plus (FieldStar x, FieldStar y) = FieldStar (x + y)
 
-instance Circuit.Dagger.Zero (->) FieldStar where
+instance Circuit.Bimonoid.Zero (->) FieldStar where
   zero _ = FieldStar 0
 
 -- | Solve one affine body in closed form.
@@ -256,7 +256,7 @@ solveAffine body dc =
 --
 -- >>> :{
 -- let body (FieldStar dj, dc) = (FieldStar (0.3 * dj + 2.0 * dc), dj)
---     b = Body (withStarChannel fieldStarChannel (Pullback body)) :: Body (,) Pullback (StarChannel FieldStar) Double Double
+--     b = Body (withStarChannel fieldStarChannel (Pullback body)) :: Body (,) (StarChannel FieldStar) Pullback Double Double
 -- :}
 --
 -- >>> let solved = solveStarBody b
@@ -264,6 +264,6 @@ solveAffine body dc =
 -- True
 solveStarBody ::
   forall s a b.
-  Body (,) Pullback (StarChannel s) b a ->
+  Body (,) (StarChannel s) Pullback b a ->
   Pullback b a
 solveStarBody (Body f) = Pullback (solveAffine (runPullback f))

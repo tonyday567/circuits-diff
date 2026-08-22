@@ -4,7 +4,7 @@
 -- | Star-elimination evidence as a channel type.
 --
 -- The insight is that star-elimination structure is /data carried on a wire/,
--- not wiring itself.  @circuits@ keeps 'Circuit.Loop.Knot' free of evidence;
+-- not wiring itself.  @circuits@ keeps 'Circuit.Trace.yank' free of evidence;
 -- 'circuits-diff' instead uses a channel whose values carry their own
 -- elimination dictionary.
 --

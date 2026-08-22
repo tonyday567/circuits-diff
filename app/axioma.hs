@@ -2,7 +2,8 @@
 
 module Main (main) where
 
-import Circuit (Loop, run)
+import Circuit (Trace, base)
+import Circuit.Syntax (eval)
 import Circuit qualified
 import Circuit.Body (Body (..))
 import Circuit.Channel (Traced (..))
@@ -63,7 +64,7 @@ main = do
   assert "gradient" (pbLoop 1.0) (1.0 / (1.0 - 0.3) * 2.0 + 1.0)
 
   putStrLn "direct primitive via run"
-  let (yPrim, pbPrim) = runDiff (run (Circuit.Lift sq :: Loop (,) Diff' Double Double)) 3.0
+  let (yPrim, pbPrim) = runDiff (eval (Circuit.base sq :: Trace (,) Diff' Double Double)) 3.0
   assert "value" yPrim 9.0
   assert "gradient" (pbPrim 1.0) 6.0
 
@@ -124,7 +125,7 @@ main = do
                in (dsIn, (dx, db))
          in ((s', (ySq, o)), pb)
       (y7, g7) = linearizeBody netBody (3.0, 4.0)
-      (_, (gx, gb)) = runPullback (runBody g7) (0.0, (1.0, 1.0))
+      (_, (gx, gb)) = runPullback (morphism g7) (0.0, (1.0, 1.0))
   assert "value fst" (fst y7) 9.0
   assert "value snd" (snd y7) 8.0
   assert "gradient x" gx 6.0

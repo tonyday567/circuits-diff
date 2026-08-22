@@ -26,7 +26,7 @@ module Circuit.Diff.Backprop
 where
 
 import Circuit.Body (Body (..))
-import Circuit.Dagger (CopyT (..), DiscardT (..), MergeT (..), ZeroT (..))
+import Circuit.Bimonoid (CopyT (..), DiscardT (..), MergeT (..), ZeroT (..))
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Diff.Circuit ()
 import Circuit.Diff.Pullback (Pullback (..))
@@ -37,7 +37,7 @@ import NumHask.Prelude
 -- $setup
 -- >>> import Circuit.Category ((.))
 -- >>> import Circuit.Diff
--- >>> import Circuit.Dagger qualified as CD
+-- >>> import Circuit.Bimonoid qualified as Bm
 -- >>> import Circuit.Net (Net (..), lift)
 -- >>> import Circuit.Diff.Pullback (Pullback (..), evalPullback)
 -- >>> import Prelude hiding (id, (.))
@@ -157,9 +157,9 @@ linearizeNet n a = case n of
 -- form by 'Circuit.Diff.Star.solveStarBody'.
 linearizeBody ::
   forall p s a b.
-  Body (,) (Diff p) s a b ->
+  Body (,) s (Diff p) a b ->
   a ->
-  (b, Body (,) Pullback s b a)
+  (b, Body (,) s Pullback b a)
 linearizeBody (Body f) a =
   let ~((s, b), pb) = runDiff f (s, a)
    in (b, Body (Pullback pb))
