@@ -165,13 +165,13 @@ instance (MergeZero (->) p) => Channel (,) (DiffP p) where
 --
 -- >>> let inc = DiffP (\() x -> (x + 1, \dy -> (dy, ()))) :: DiffP () Int Int
 -- >>> let dbl = DiffP (\() x -> (2 * x, \dy -> (2 * dy, ()))) :: DiffP () Int Int
--- >>> let (y, pb) = runDiffP (par inc dbl) () (3, 4)
+-- >>> let (y, pb) = runDiffP (tensor inc dbl) () (3, 4)
 -- >>> y
 -- (4,8)
 -- >>> pb (1, 1)
 -- ((1,2),())
 instance (MergeZero (->) p) => Tensor (,) (DiffP p) where
-  par (DiffP f) (DiffP g) = DiffP $ \p (a, c) ->
+  tensor (DiffP f) (DiffP g) = DiffP $ \p (a, c) ->
     let (b, fBack) = f p a
         (d, gBack) = g p c
      in ( (b, d),
@@ -180,7 +180,7 @@ instance (MergeZero (->) p) => Tensor (,) (DiffP p) where
                 (dc, dpG) = gBack dd
              in ((da, dc), CB.plus (dpF, dpG))
         )
-  {-# INLINE par #-}
+  {-# INLINE tensor #-}
   unitl = DiffP $ \_ ((), a) -> (a, \da -> (((), da), CB.zero ()))
   {-# INLINE unitl #-}
   unitl' = DiffP $ \_ a -> (((), a), \((), da) -> (da, CB.zero ()))
@@ -191,8 +191,8 @@ instance (MergeZero (->) p) => Tensor (,) (DiffP p) where
   {-# INLINE unitr' #-}
 
 instance (MergeZero (->) p) => Action (,) (DiffP p) where
-  swap = DiffP $ \_ (a, b) -> ((b, a), \(db, da) -> ((da, db), CB.zero ()))
-  {-# INLINE swap #-}
+  braid = DiffP $ \_ (a, b) -> ((b, a), \(db, da) -> ((da, db), CB.zero ()))
+  {-# INLINE braid #-}
 
 ----------------------------------------------------------------------
 -- Bimonoid structure

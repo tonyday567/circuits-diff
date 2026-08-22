@@ -117,9 +117,9 @@ instance Strength (,) (Taylor n) where
   {-# INLINE strength #-}
 
 instance Tensor (,) (Taylor n) where
-  par (Taylor f) (Taylor g) = Taylor $ \case
+  tensor (Taylor f) (Taylor g) = Taylor $ \case
     VP x y -> VP (f x) (g y)
-  {-# INLINE par #-}
+  {-# INLINE tensor #-}
 
   unitl = Taylor $ \case
     VP VT x -> x
@@ -136,9 +136,9 @@ instance Tensor (,) (Taylor n) where
   {-# INLINE unitr' #-}
 
 instance Action (,) (Taylor n) where
-  swap = Taylor $ \case
+  braid = Taylor $ \case
     VP x y -> VP y x
-  {-# INLINE swap #-}
+  {-# INLINE braid #-}
 
 -- ---------------------------------------------------------------------------
 -- Trace: lazy knot on the value shape

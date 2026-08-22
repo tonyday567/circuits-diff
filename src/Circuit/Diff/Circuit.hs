@@ -231,16 +231,16 @@ instance (Zero (->) a) => Zero (Diff p) a where
 --
 -- >>> let f = Diff (\x -> (x + 1, \d -> d)) :: Diff' Int Int
 -- >>> let g = Diff (\x -> (x * 2, \d -> 2 * d)) :: Diff' Int Int
--- >>> let (y, pb) = runDiff (par f g) (3, 4)
+-- >>> let (y, pb) = runDiff (tensor f g) (3, 4)
 -- >>> y
 -- (4,8)
 -- >>> pb (1, 1)
 -- (1,2)
 instance Tensor (,) (Diff p) where
-  par (Diff f) (Diff g) = Diff $ \(a, c) ->
+  tensor (Diff f) (Diff g) = Diff $ \(a, c) ->
     let (b, fb) = f a; (d, gd) = g c
      in ((b, d), Data.Bifunctor.bimap fb gd)
-  {-# INLINE par #-}
+  {-# INLINE tensor #-}
   unitl = Diff (\((), a) -> (a, ((),)))
   {-# INLINE unitl #-}
   unitl' = Diff (\a -> (((), a), \((), da) -> da))
@@ -251,8 +251,8 @@ instance Tensor (,) (Diff p) where
   {-# INLINE unitr' #-}
 
 instance Action (,) (Diff p) where
-  swap = Diff (\(a, b) -> ((b, a), \(db, da) -> (da, db)))
-  {-# INLINE swap #-}
+  braid = Diff (\(a, b) -> ((b, a), \(db, da) -> (da, db)))
+  {-# INLINE braid #-}
 
 -- ---------------------------------------------------------------------------
 -- StarSemiring — the principled Neumann index
@@ -387,7 +387,7 @@ traceNFrom x0 n (Diff body) = Diff $ \b ->
 -- Smoke test: quadratic — the term that was impossible in Stage 1
 -- ---------------------------------------------------------------------------
 
--- | @2x² + 3x + 5@ built from 'par', 'dup', and 'plus' on the @Diff@ arrow.
+-- | @2x² + 3x + 5@ built from 'tensor', 'dup', and 'plus' on the @Diff@ arrow.
 -- No 'Net' needed — the instances are the denotations the rows will realise to.
 --
 -- The gradient is @4x + 3@, so at @x = 1@: value 10, gradient 7.
@@ -398,7 +398,7 @@ traceNFrom x0 n (Diff body) = Diff $ \b ->
 -- >>> pb 1.0
 -- 7.0
 quadD :: Diff p Double Double
-quadD = CB.plus . par sq lin . CB.copy
+quadD = CB.plus . tensor sq lin . CB.copy
   where
     sq = Diff (\x -> (2 * x * x, \d -> 4 * x * d))
     lin = Diff (\x -> (3 * x + 5, (3 *)))

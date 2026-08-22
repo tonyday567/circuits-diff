@@ -59,16 +59,16 @@ instance Category Pullback where
   {-# INLINE id #-}
   {-# INLINE (.) #-}
 
--- | Parallel composition pairs pullbacks independently; 'swap' swaps
+-- | Parallel composition pairs pullbacks independently; 'braid' swaps
 -- the two cotangents.
 --
 -- >>> let f = Pullback (+1) :: Pullback Int Int
 -- >>> let g = Pullback (*2) :: Pullback Int Int
--- >>> runPullback (par f g) (3, 4)
+-- >>> runPullback (tensor f g) (3, 4)
 -- (4,8)
 instance Tensor (,) Pullback where
-  par (Pullback f) (Pullback g) = Pullback (Data.Bifunctor.bimap f g)
-  {-# INLINE par #-}
+  tensor (Pullback f) (Pullback g) = Pullback (Data.Bifunctor.bimap f g)
+  {-# INLINE tensor #-}
   unitl = Pullback snd
   {-# INLINE unitl #-}
   unitl' = Pullback ((),)
@@ -79,8 +79,8 @@ instance Tensor (,) Pullback where
   {-# INLINE unitr' #-}
 
 instance Action (,) Pullback where
-  swap = Pullback (\(b, a) -> (a, b))
-  {-# INLINE swap #-}
+  braid = Pullback (\(b, a) -> (a, b))
+  {-# INLINE braid #-}
 
 instance Strength (,) Pullback where
   strength (Pullback f) = Pullback (\(a, b) -> (a, f b))
