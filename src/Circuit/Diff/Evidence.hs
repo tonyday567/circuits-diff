@@ -28,9 +28,9 @@ module Circuit.Diff.Evidence
 where
 
 import Circuit.Diff (Diff (..))
-import Circuit.Diff.Pullback (Pullback (..))
 import Circuit.Mat.Dense (Matrix (..), fromLists, matVec, toLists)
 import Circuit.Mat.Dense qualified as MD
+import Circuit.Pullback (Pullback (..))
 import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Multiplicative qualified as NHM
 import NumHask.Algebra.Ring qualified as NHR

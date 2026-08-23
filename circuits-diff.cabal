@@ -62,7 +62,6 @@ library
     Circuit.Diff.Newton
     Circuit.Diff.Operators
     Circuit.Diff.Param
-    Circuit.Diff.Pullback
     Circuit.Diff.RDC
     Circuit.Diff.Star
     Circuit.Diff.Taylor

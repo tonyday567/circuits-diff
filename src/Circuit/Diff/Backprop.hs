@@ -39,8 +39,8 @@ import Circuit.Body (Body (..))
 import Circuit.Category ((.))
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Diff.Circuit ()
-import Circuit.Diff.Pullback (Pullback (..))
 import Circuit.Net (Net, braid, lift, widen)
+import Circuit.Pullback (Pullback (..))
 import Circuit.SMC (SMC, SigPar (..), SigSwap (..))
 import Circuit.SMC qualified as SMC
 import Circuit.Syntax (SigCompose (..), Syntax (..), (:+:) (..))
@@ -52,7 +52,7 @@ import NumHask.Prelude hiding ((.))
 -- >>> import Circuit.Diff
 -- >>> import Circuit.Bimonoid qualified as Bm
 -- >>> import Circuit.Net (Net, lift, widen)
--- >>> import Circuit.Diff.Pullback (Pullback (..), evalPullback)
+-- >>> import Circuit.Pullback (Pullback (..), evalPullback)
 -- >>> import Circuit.SMC qualified as SMC
 -- >>> import Circuit.Tensor (Tensor (..))
 -- >>> import Prelude hiding (id, (.))
@@ -74,7 +74,7 @@ import NumHask.Prelude hiding ((.))
 -- and returns both the output value and a 'Net Pullback' whose wires
 -- are those pointwise pullbacks composed in reverse order.
 --
--- Use 'Circuit.Diff.Pullback.evalPullback' to evaluate the resulting net
+-- Use 'Circuit.Pullback.evalPullback' to evaluate the resulting net
 -- at a single output cotangent.
 --
 -- >>> let sq = Diff (\x -> (x * x, \d -> 2 * x * d)) :: Diff' Double Double

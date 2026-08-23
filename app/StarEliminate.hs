@@ -15,8 +15,8 @@ import Circuit.Diff.Evidence
     withStarChannel,
     withStarChannelDiff,
   )
-import Circuit.Diff.Pullback (Pullback (..))
 import Circuit.Diff.Star (solveStarBody)
+import Circuit.Pullback (Pullback (..))
 import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Multiplicative qualified as NHM
 import NumHask.Free.Carriers (FieldStar (..))

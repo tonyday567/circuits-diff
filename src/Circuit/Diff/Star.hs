@@ -36,14 +36,14 @@ module Circuit.Diff.Star
   )
 where
 
-import Circuit.Body (Body (..))
 import Circuit.Bimonoid (Merge, MergeZero, Zero)
 import Circuit.Bimonoid qualified as CB
+import Circuit.Body (Body (..))
 import Circuit.Diff.Circuit (Diff (..), traceStarFrom)
 import Circuit.Diff.Evidence (StarChannel (..))
-import Circuit.Diff.Pullback (Pullback (..))
 import Circuit.Mat.Dense (fromLists, matVec)
 import Circuit.Mat.Dense qualified as MD
+import Circuit.Pullback (Pullback (..))
 import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Multiplicative qualified as NHM
 import NumHask.Algebra.Ring qualified as NHR
@@ -54,7 +54,7 @@ import NumHask.Prelude
 -- >>> import Circuit.Body (Body (..))
 -- >>> import Circuit.Diff.Circuit
 -- >>> import Circuit.Diff.Evidence (StarChannel (..), fieldStarChannel, withStarChannel)
--- >>> import Circuit.Diff.Pullback (Pullback (..))
+-- >>> import Circuit.Pullback (Pullback (..))
 -- >>> import NumHask.Free.Carriers (FieldStar (..))
 -- >>> import Prelude hiding (id, (.))
 
