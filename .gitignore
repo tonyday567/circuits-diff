@@ -7,3 +7,5 @@ dist/
 *.dyn_o
 .stack-work/
 cabal.project.local
+*.ghc.environment.*
+.DS_Store
