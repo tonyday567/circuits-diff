@@ -25,22 +25,36 @@ module Circuit.Diff.Backprop
   )
 where
 
-import Circuit.Bimonoid (CopyT (..), DiscardT (..), MergeT (..), ZeroT (..))
+import Circuit.Bimonoid
+  ( CopyT (..),
+    DiscardT (..),
+    MergeT (..),
+    SigCopy (..),
+    SigDiscard (..),
+    SigPlus (..),
+    SigZero (..),
+    ZeroT (..),
+  )
 import Circuit.Body (Body (..))
+import Circuit.Category ((.))
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Diff.Circuit ()
 import Circuit.Diff.Pullback (Pullback (..))
-import Circuit.Net (Net (..), lift)
+import Circuit.Net (Net, braid, lift, widen)
 import Circuit.SMC (SMC, SigPar (..), SigSwap (..))
+import Circuit.SMC qualified as SMC
 import Circuit.Syntax (SigCompose (..), Syntax (..), (:+:) (..))
-import NumHask.Prelude
+import Circuit.Tensor (Tensor (..))
+import NumHask.Prelude hiding ((.))
 
 -- $setup
 -- >>> import Circuit.Category ((.))
 -- >>> import Circuit.Diff
 -- >>> import Circuit.Bimonoid qualified as Bm
--- >>> import Circuit.Net (Net (..), lift)
+-- >>> import Circuit.Net (Net, lift, widen)
 -- >>> import Circuit.Diff.Pullback (Pullback (..), evalPullback)
+-- >>> import Circuit.SMC qualified as SMC
+-- >>> import Circuit.Tensor (Tensor (..))
 -- >>> import Prelude hiding (id, (.))
 
 -- | Pointwise linearization: run a 'Net' of 'Diff' primitives forward at @a@
@@ -63,8 +77,11 @@ import NumHask.Prelude
 -- Use 'Circuit.Diff.Pullback.evalPullback' to evaluate the resulting net
 -- at a single output cotangent.
 --
--- >>> let sq = Diff (\x -> (x * x, \d -> 2 * x * d))
--- >>> let n = Plus . Par (lift sq) (lift sq) . Copy :: Net (,) Diff' Double Double
+-- >>> let sq = Diff (\x -> (x * x, \d -> 2 * x * d)) :: Diff' Double Double
+-- >>> let copyN = lift (Bm.copyT @(,) @Diff' @Double) :: Net (,) Diff' Double (Double, Double)
+-- >>> let plusN = lift (Bm.plusT @(,) @Diff' @Double) :: Net (,) Diff' (Double, Double) Double
+-- >>> let parN = widen (tensor (SMC.lift sq) (SMC.lift sq)) :: Net (,) Diff' (Double, Double) (Double, Double)
+-- >>> let n = plusN . parN . copyN :: Net (,) Diff' Double Double
 -- >>> let (y, g) = linearizeAt n 3.0
 -- >>> y
 -- 18.0
@@ -83,10 +100,10 @@ fromDiffAt (Diff f) a = Pullback (snd (f a))
 -- | Run a 'Net' of 'Diff' primitives forward and build the transposed
 -- pullback net.
 --
--- Structural rows ('Copy', 'Plus', 'Discard', 'Zero') are converted to
--- point-independent 'lift' pullbacks using the 'Diff' dictionaries the
--- constructors already carry (copy↦plus, plus↦dup, discard↦zero,
--- zero↦discard).
+-- Structural rows ('SigCopy', 'SigPlus', 'SigDiscard', 'SigZero') are
+-- converted to point-independent 'lift' pullbacks using the 'Diff'
+-- dictionaries the constructors already carry (copy↦plus, plus↦dup,
+-- discard↦zero, zero↦discard).
 linearizeAt ::
   forall p a b.
   Net (,) (Diff p) a b ->
@@ -101,51 +118,34 @@ linearizeNet ::
   a ->
   (b, Net (,) Pullback b a)
 linearizeNet n a = case n of
-  FromSMC s -> linearizeSMC s a
-  Compose g f ->
-    let (b, f') = linearizeNet f a
-        (c, g') = linearizeNet g b
-     in (c, Compose f' g')
-  Par f g ->
-    let (a1, a2) = a
-        (b, f') = linearizeNet f a1
-        (d, g') = linearizeNet g a2
-     in ((b, d), Par f' g')
-  Copy ->
-    let (out, pb) = runDiff (copyT :: Diff p a (a, a)) a
-     in (out, lift (Pullback pb))
-  Discard ->
-    let (out, pb) = runDiff (discardT @(,) :: Diff p a ()) a
-     in (out, lift (Pullback pb))
-  Plus ->
-    let (out, pb) = runDiff (plusT :: Diff p (b, b) b) a
-     in (out, lift (Pullback pb))
-  Zero ->
-    let (out, pb) = runDiff (zeroT @(,) :: Diff p () b) ()
-     in (out, lift (Pullback pb))
-  where
-    linearizeSMC ::
-      forall x y.
-      SMC (,) (Diff p) x y ->
-      x ->
-      (y, Net (,) Pullback y x)
-    linearizeSMC s x = case s of
-      Lift d ->
-        let (y, pb) = runDiff d x
-         in (y, lift (Pullback pb))
-      Op op -> case op of
-        L (SigCompose g f) ->
-          let (b, f') = linearizeSMC f x
-              (c, g') = linearizeSMC g b
-           in (c, Compose f' g')
-        R (L (SigPar f g)) ->
-          let (x1, x2) = x
-              (b, f') = linearizeSMC f x1
-              (d, g') = linearizeSMC g x2
-           in ((b, d), Par f' g')
-        R (R SigSwap) ->
-          let (u, v) = x
-           in ((v, u), FromSMC (Op (R (R SigSwap))))
+  Lift d ->
+    let (y, pb) = runDiff d a
+     in (y, lift (Pullback pb))
+  Op op -> case op of
+    L (SigCompose g f) ->
+      let (b, f') = linearizeNet f a
+          (c, g') = linearizeNet g b
+       in (c, f' . g')
+    R (L (SigPar f g)) ->
+      let (a1, a2) = a
+          (b, f') = linearizeNet f a1
+          (d, g') = linearizeNet g a2
+       in ((b, d), Op (R (L (SigPar f' g'))))
+    R (R (L SigSwap)) ->
+      let (u, v) = a
+       in ((v, u), braid)
+    R (R (R (L SigCopy))) ->
+      let (out, pb) = runDiff (copyT @(,) @(Diff p)) a
+       in (out, lift (Pullback pb))
+    R (R (R (R (L SigDiscard)))) ->
+      let (out, pb) = runDiff (discardT @(,) @(Diff p)) a
+       in (out, lift (Pullback pb))
+    R (R (R (R (R (L SigPlus))))) ->
+      let (out, pb) = runDiff (plusT @(,) @(Diff p)) a
+       in (out, lift (Pullback pb))
+    R (R (R (R (R (R SigZero))))) ->
+      let (out, pb) = runDiff (zeroT @(,) @(Diff p)) ()
+       in (out, lift (Pullback pb))
 
 -- | Pointwise linearization over the core 'Body' language.
 --

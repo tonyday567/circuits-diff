@@ -25,9 +25,9 @@ module Circuit.Diff.Pullback
   )
 where
 
+import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), Zero (..))
 import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
-import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), Zero (..))
 import Circuit.Layer (run)
 import Circuit.Net (Net)
 import Circuit.Tensor (Action (..), Tensor (..))
@@ -39,7 +39,7 @@ import Prelude hiding (id, (.))
 -- >>> import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), Zero (..))
 -- >>> import Circuit.Channel (Channel (..), Strength (..), Traced (..))
 -- >>> import Circuit.Tensor (Action (..), Tensor (..))
--- >>> import Circuit.Net (Net (..))
+-- >>> import Circuit.Net (Net)
 -- >>> import Prelude hiding (id, (.))
 
 -- | A linear map from output cotangents to input cotangents, read as

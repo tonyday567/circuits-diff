@@ -3,19 +3,23 @@
 module Main (main) where
 
 import Circuit (Trace, base)
-import Circuit.Syntax (eval)
 import Circuit qualified
+import Circuit.Bimonoid qualified as Bm
 import Circuit.Body (Body (..))
+import Circuit.Category ((.))
 import Circuit.Channel (Traced (..))
 import Circuit.Diff.Backprop (linearizeAt, linearizeBody)
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
 import Circuit.Diff.Pullback (Pullback (..), evalPullback)
-import Circuit.Net (Net (..), lift)
+import Circuit.Net (Net, lift, widen)
+import Circuit.SMC qualified as SMC
+import Circuit.Syntax (eval)
+import Circuit.Tensor (Tensor (..))
 import DiffCarrierTests (runDiffCarrierTests)
 import Kepler (runKeplerTests)
 import MatrixStar (runMatrixStarTests)
 import MetricAdjoint (runMetricAdjointTests)
-import NumHask.Prelude
+import NumHask.Prelude hiding ((.))
 import Operators (runOperatorTests)
 import StarEliminate (runStarEliminateTests)
 import StreamTower (runStreamTowerTests)
@@ -42,7 +46,7 @@ constD c = Diff (const (c, const 0))
 
 -- | Net computing 2*x^2 via copy, parallel squares, then add.
 quadNet :: Net (,) Diff' Double Double
-quadNet = Compose Plus (Compose (Par (lift sq) (lift sq)) Copy)
+quadNet = lift (Bm.plusT @(,) @Diff' @Double) . widen (tensor (SMC.lift sq) (SMC.lift sq)) . lift (Bm.copyT @(,) @Diff' @Double)
 
 -- | Linear feedback loop: x' = 0.3*x + 2*b, c = x + b.
 loopBody :: Diff' (Double, Double) (Double, Double)
