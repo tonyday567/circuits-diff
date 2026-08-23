@@ -26,8 +26,8 @@ import NumHask.Algebra.Additive (Additive (..), Subtractive (..))
 import NumHask.Algebra.Field (ExpField, TrigField)
 import NumHask.Algebra.Field qualified as NHField
 import NumHask.Algebra.Multiplicative (Multiplicative (..))
-import System.Exit (exitFailure)
 import NumHask.Prelude
+import System.Exit (exitFailure)
 
 eps :: Double
 eps = 1e-10

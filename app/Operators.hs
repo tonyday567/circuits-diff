@@ -1,4 +1,5 @@
 {-# LANGUAGE RebindableSyntax #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 
 -- | Eshkol-style AD operator axioms and exact-vs-finite-difference logging.
 --
@@ -47,14 +48,14 @@ assert name got expected =
 
 assertFD :: String -> Double -> Double -> IO ()
 assertFD name got expected = do
-  let diff = abs (got - expected)
-  if diff < 1e-1 + 1e-1 * abs expected
+  let delta = abs (got - expected)
+  if delta < 1e-1 + 1e-1 * abs expected
     then putStrLn $ "  PASS " ++ name ++ " (FD): " ++ show got
-    else putStrLn $ "  WARN " ++ name ++ " (FD gap=" ++ show diff ++ "): got " ++ show got ++ ", expected " ++ show expected
+    else putStrLn $ "  WARN " ++ name ++ " (FD gap=" ++ show delta ++ "): got " ++ show got ++ ", expected " ++ show expected
 
 logExactVsFD :: String -> Double -> Double -> IO ()
 logExactVsFD name exact fd =
-  let diff = abs (exact - fd)
+  let delta = abs (exact - fd)
    in putStrLn $
         "  "
           ++ name
@@ -63,7 +64,7 @@ logExactVsFD name exact fd =
           ++ "  fd="
           ++ show fd
           ++ "  |diff|="
-          ++ show diff
+          ++ show delta
 
 -- ---------------------------------------------------------------------------
 -- 1. Scalar Taylor towers: exact (Jet) vs finite-difference (Taylor)
@@ -180,7 +181,7 @@ runMultivariateTests = do
 
   -- jacobian of R -> R^2 map: f(t) = (t^2, t^3) => J = [[2t], [3t^2]]
   let r2n :: Diff () Double [Double]
-      r2n = Diff $ \t -> ([t * t, t * t * t], \ds -> 2 * t * head ds + 3 * t * t * (ds !! 1))
+      r2n = Diff $ \t -> ([t * t, t * t * t], \[d0, d1] -> 2 * t * d0 + 3 * t * t * d1)
   let (_, pbR2N) = runDiff r2n 2
       jacR2N = [[pbR2N [1, 0]], [pbR2N [0, 1]]]
   assertMat "R->R^2 derivative (t^2,t^3) @ 2" jacR2N [[4.0], [12.0]]
@@ -191,7 +192,7 @@ runMultivariateTests = do
 
   -- divergence: F(v) = (v0^2) => div = 2*v0
   let dmap :: Diff () [Double] [Double]
-      dmap = Diff $ \v -> let x = head v in ([x * x], \ds -> [2 * x * head ds])
+      dmap = Diff $ \(x : _) -> ([x * x], \[d0] -> [2 * x * d0])
   assert "divergence (v0^2) @ [1/3]" (divergence dmap [1 / 3]) (2 / 3)
 
   -- curl: F = (y^2, z^2, x^2) => curl = (-2z, -2x, -2y)
@@ -208,7 +209,7 @@ runMultivariateTests = do
 
   -- laplacian: f(v) = v0^4 => lap = 12*v0^2
   let v0quart :: Diff () [Double] Double
-      v0quart = Diff $ \v -> let x = head v in (x * x * x * x, \d -> [4 * d * x * x * x])
+      v0quart = Diff $ \(x : _) -> (x * x * x * x, \d -> [4 * d * x * x * x])
   assertFD "laplacian v0^4 @ [1/3]" (laplacian v0quart [1 / 3]) (4 / 3)
 
 -- ---------------------------------------------------------------------------

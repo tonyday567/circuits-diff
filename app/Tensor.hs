@@ -111,27 +111,27 @@ runTensorTowerTests = do
   mapM_ (\(k, (got, expc)) -> assertS ("cube d" ++ show k) got expc) (zip [0 :: Int ..] (zip coeffs ref))
 
   putStrLn "tensor tower: matmul chain"
-  let a = squareFromLists @2 [[1.0, 2.0], [3.0, 4.0]] :: Square 2 Double
-      b = squareFromLists @2 [[5.0, 6.0], [7.0, 8.0]] :: Square 2 Double
-      t0 = 1.3
-      s = arraySum (a * b)
-      ja = scalarSeriesMatrix 4 a t0
-      jb = scalarSeriesMatrix 4 b t0
-      coeffs = tensorTaylor (\_ -> ja * jb) 4 zero
-  assertS "matmul value" (arraySum (coeffs !! 0)) (s * t0 * t0)
-  assertS "matmul d1" (arraySum (coeffs !! 1)) (2.0 * s * t0)
-  assertS "matmul d2" (arraySum (coeffs !! 2)) (2.0 * s)
-  assertS "matmul d3" (arraySum (coeffs !! 3)) 0.0
-  assertS "matmul d4" (arraySum (coeffs !! 4)) 0.0
+  let a2 = squareFromLists @2 [[1.0, 2.0], [3.0, 4.0]] :: Square 2 Double
+      b2 = squareFromLists @2 [[5.0, 6.0], [7.0, 8.0]] :: Square 2 Double
+      t02 = 1.3
+      s2 = arraySum (a2 * b2)
+      ja2 = scalarSeriesMatrix 4 a2 t02
+      jb2 = scalarSeriesMatrix 4 b2 t02
+      coeffs2 = tensorTaylor (\_ -> ja2 * jb2) 4 zero
+  assertS "matmul value" (arraySum (coeffs2 !! 0)) (s2 * t02 * t02)
+  assertS "matmul d1" (arraySum (coeffs2 !! 1)) (2.0 * s2 * t02)
+  assertS "matmul d2" (arraySum (coeffs2 !! 2)) (2.0 * s2)
+  assertS "matmul d3" (arraySum (coeffs2 !! 3)) 0.0
+  assertS "matmul d4" (arraySum (coeffs2 !! 4)) 0.0
 
   putStrLn "tensor tower: sigmoid/tanh elementwise"
-  let c = squareFromLists @2 [[0.4, -0.7], [1.2, 0.9]] :: Square 2 Double
-      t0 = 0.5
-      pt = fmap (t0 *) c
+  let c2 = squareFromLists @2 [[0.4, -0.7], [1.2, 0.9]] :: Square 2 Double
+      t03 = 0.5
+      pt2 = fmap (t03 *) c2
       -- compute one component's exact scalar sigmoid derivatives as oracle
-      c00 = c F.! [0, 0]
-      x00 = t0 * c00
-      s0 = 1.0 / (1.0 + exp (-x00))
+      c00_2 = c2 F.! [0, 0]
+      x00_2 = t03 * c00_2
+      s0 = 1.0 / (1.0 + exp (-x00_2))
       sigRef =
         [ s0,
           s0 * (1.0 - s0),
@@ -139,29 +139,29 @@ runTensorTowerTests = do
           s0 * (1.0 - s0) * (1.0 - 6.0 * s0 + 6.0 * s0 * s0)
         ]
       sigmoidJet x = one / (one + exp (negate x))
-      sigCoeffs =
-        [ elementwiseTower sigmoidJet k pt F.! [0, 0]
+      sigCoeffs2 =
+        [ elementwiseTower sigmoidJet k pt2 F.! [0, 0]
         | k <- [0 .. 3]
         ]
-  mapM_ (\(k, (got, expc)) -> assertS ("sigmoid d" ++ show k) got expc) (zip [0 :: Int ..] (zip sigCoeffs sigRef))
+  mapM_ (\(k, (got, expc)) -> assertS ("sigmoid d" ++ show k) got expc) (zip [0 :: Int ..] (zip sigCoeffs2 sigRef))
 
   putStrLn "tensor tower: tanh elementwise"
-  let d = squareFromLists @2 [[0.4, -0.7], [1.2, 0.9]] :: Square 2 Double
-      t1 = 0.5
-      ptTanh = fmap (t1 *) d
-      z00 = ptTanh F.! [0, 0]
-      y0 = tanh z00
+  let d2 = squareFromLists @2 [[0.4, -0.7], [1.2, 0.9]] :: Square 2 Double
+      t12 = 0.5
+      ptTanh2 = fmap (t12 *) d2
+      z00_2 = ptTanh2 F.! [0, 0]
+      y0 = tanh z00_2
       tanhRef =
         [ y0,
           1.0 - y0 * y0,
           -(2.0 * y0 * (1.0 - y0 * y0)),
           (1.0 - y0 * y0) * (6.0 * y0 * y0 - 2.0)
         ]
-      tanhCoeffs =
-        [ elementwiseTower tanh k ptTanh F.! [0, 0]
+      tanhCoeffs2 =
+        [ elementwiseTower tanh k ptTanh2 F.! [0, 0]
         | k <- [0 .. 3]
         ]
-  mapM_ (\(k, (got, expc)) -> assertS ("tanh d" ++ show k) got expc) (zip [0 :: Int ..] (zip tanhCoeffs tanhRef))
+  mapM_ (\(k, (got, expc)) -> assertS ("tanh d" ++ show k) got expc) (zip [0 :: Int ..] (zip tanhCoeffs2 tanhRef))
 
 -- ---------------------------------------------------------------------------
 -- Reverse-mode tensor primitives
@@ -181,37 +181,37 @@ runReverseTensorTests = do
   assertM "dB = A^T dY" db_ dbRef
 
   putStrLn "reverse-mode: sigmoidD vs finite differences"
-  let x = squareFromLists @2 [[0.5, -0.3], [1.2, 0.0]] :: Square 2 Double
-      h = 1e-5
-      (_, pb) = runDiff sigmoidD x
-      dx = pb (F.konst 1.0)
-      dxFD =
+  let x2 = squareFromLists @2 [[0.5, -0.3], [1.2, 0.0]] :: Square 2 Double
+      h2 = 1e-5
+      (_, pb2) = runDiff sigmoidD x2
+      dx2 = pb2 (F.konst 1.0)
+      dxFD2 =
         F.zipWith
-          (\xi di -> di / h)
-          x
+          (\_ di -> di / h2)
+          x2
           ( F.zipWith
               (-)
-              (fmap (fst . phi . (+ h)) x)
-              (fmap (fst . phi) x)
+              (fmap (fst . phi . (+ h2)) x2)
+              (fmap (fst . phi) x2)
           )
       phi y = let s = 1.0 / (1.0 + exp (-y)) in (s, \d -> d * s * (1.0 - s))
-  assertMFD "sigmoid pullback" dx dxFD
+  assertMFD "sigmoid pullback" dx2 dxFD2
 
   putStrLn "reverse-mode: tanhD vs finite differences"
-  let x = squareFromLists @2 [[0.5, -0.3], [1.2, 0.0]] :: Square 2 Double
-      h = 1e-5
-      (_, pb) = runDiff tanhD x
-      dx = pb (F.konst 1.0)
-      dxFD =
+  let x3 = squareFromLists @2 [[0.5, -0.3], [1.2, 0.0]] :: Square 2 Double
+      h3 = 1e-5
+      (_, pb3) = runDiff tanhD x3
+      dx3 = pb3 (F.konst 1.0)
+      dxFD3 =
         F.zipWith
-          (\xi di -> di / h)
-          x
+          (\_ di -> di / h3)
+          x3
           ( F.zipWith
               (-)
-              (fmap (tanh . (+ h)) x)
-              (fmap tanh x)
+              (fmap (tanh . (+ h3)) x3)
+              (fmap tanh x3)
           )
-  assertMFD "tanh pullback" dx dxFD
+  assertMFD "tanh pullback" dx3 dxFD3
 
 runTensorTests :: IO ()
 runTensorTests = do

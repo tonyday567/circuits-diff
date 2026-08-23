@@ -17,8 +17,8 @@ import Circuit.Mat.Dense (fromLists, matVec, starMatrix)
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Divisive (recip))
 import NumHask.Free.Carriers (FieldStar (..))
-import System.Exit (exitFailure)
 import NumHask.Prelude
+import System.Exit (exitFailure)
 
 eps :: Double
 eps = 1e-9

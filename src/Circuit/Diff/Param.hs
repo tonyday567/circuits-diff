@@ -38,10 +38,10 @@ module Circuit.Diff.Param
   )
 where
 
-import Circuit.Category (Category (..))
-import Circuit.Channel (Channel (..))
 import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 import Circuit.Bimonoid qualified as CB
+import Circuit.Category (Category (..))
+import Circuit.Channel (Channel (..))
 import Circuit.Diff (Diff (..), runDiff)
 import Circuit.Tensor (Action (..), Tensor (..))
 import Prelude hiding (id, (.))

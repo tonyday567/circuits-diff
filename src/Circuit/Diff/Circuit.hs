@@ -27,10 +27,10 @@ module Circuit.Diff.Circuit
   )
 where
 
-import Circuit.Category (Category (..))
-import Circuit.Channel (Channel (..), Strength (..), Traced (..))
 import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 import Circuit.Bimonoid qualified as CB
+import Circuit.Category (Category (..))
+import Circuit.Channel (Channel (..), Strength (..), Traced (..))
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Tensor (Action (..), Tensor (..))
 import Data.Bifunctor

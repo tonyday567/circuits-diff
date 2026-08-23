@@ -110,17 +110,17 @@ listStarChannel ::
   Int ->
   StarChannel [a]
 listStarChannel dim =
-  let basis n i = [if k == i then NHM.one else NHA.zero | k <- [0 .. n - 1]]
-      zero n = replicate n NHA.zero
+  let basisVec n i = [if k == i then NHM.one else NHA.zero | k <- [0 .. n - 1]]
+      zeroVec n = replicate n NHA.zero
    in StarChannel
         { starDim = dim,
-          starData = zero dim,
-          starZero = zero,
-          starBasis = basis,
+          starData = zeroVec dim,
+          starZero = zeroVec,
+          starBasis = basisVec,
           starAdd = zipWith (NHA.+),
           starNegate = fmap NHA.negate,
           starSelfMatrix = \n f ->
-            let cols = [f (basis n i) | i <- [0 .. n - 1]]
+            let cols = [f (basisVec n i) | i <- [0 .. n - 1]]
              in fromLists [[col !! k | col <- cols] | k <- [0 .. n - 1]],
           starApplyMatrix = matVec,
           starMatrix = MD.starMatrix

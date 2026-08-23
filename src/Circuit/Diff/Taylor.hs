@@ -46,9 +46,9 @@ module Circuit.Diff.Taylor
   )
 where
 
+import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), Zero (..))
 import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
-import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), Zero (..))
 import Circuit.Diff (Diff, runDiff)
 import Circuit.Diff.Jet (Jet (..), constant, variable)
 import Circuit.Tensor (Action (..), Tensor (..))

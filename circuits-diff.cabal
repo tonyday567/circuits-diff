@@ -16,11 +16,13 @@ description:
   differential categories, curvature, charts, star-elimination, and
   parameterised differentiable arrows.  Everything lives under the
   'Circuit.Diff' namespace.
+
 build-type: Simple
 tested-with:
   ghc ==9.10.1
   ghc ==9.12.2
   ghc ==9.14.1
+
 extra-doc-files:
   ChangeLog.md
   readme.md
@@ -38,7 +40,8 @@ common ghc-options-stanza
     -Wincomplete-record-updates
     -Wincomplete-uni-patterns
     -Wpartial-fields
-    -Wredundant-constraints
+    -Wno-redundant-constraints
+    -Wno-orphans
 
   if impl(ghc >=9.14)
     ghc-options: -Wno-pattern-namespace-specifier
@@ -49,6 +52,7 @@ library
   hs-source-dirs: src
   exposed-modules:
     Circuit.Diff
+    Circuit.Diff.Array
     Circuit.Diff.Backprop
     Circuit.Diff.Carrier
     Circuit.Diff.Chart
@@ -65,7 +69,6 @@ library
     Circuit.Diff.RDC
     Circuit.Diff.Star
     Circuit.Diff.Taylor
-    Circuit.Diff.Array
 
   build-depends:
     base >=4.20 && <5,
@@ -89,6 +92,7 @@ executable circuits-diff-axioma
     StreamTower
     Tags
     Tensor
+
   build-depends:
     base >=4.20 && <5,
     circuits,

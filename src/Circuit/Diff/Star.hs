@@ -92,8 +92,8 @@ traceStarMatrix x0 n (Diff body) = Diff $ \b ->
       ((_, c), backward) = body (a, b)
       -- Channel self-coupling, column i = backward probe at e_i
       zeroV = replicate dim NHA.zero
-      basis i = [if k == i then NHM.one else NHA.zero | k <- [0 .. dim - 1]]
-      cols = [fst (backward (basis i, CB.zero ())) | i <- [0 .. dim - 1]]
+      basisVec i = [if k == i then NHM.one else NHA.zero | k <- [0 .. dim - 1]]
+      cols = [fst (backward (basisVec i, CB.zero ())) | i <- [0 .. dim - 1]]
       aMat = fromLists [[col !! k | col <- cols] | k <- [0 .. dim - 1]]
       -- star A — Gaussian elimination / Warshall / Floyd–Warshall /
       -- state elimination, depending on the carrier
