@@ -32,7 +32,7 @@ import Circuit.Bimonoid qualified as CB
 import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
 import Circuit.Diff (Diff (..), Diff', runDiff)
-import Circuit.Tensor (Action (..), Tensor (..))
+import Circuit.Tensor (Action (..), Tensor (..), Unital (..))
 import Data.Bifunctor
 import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Multiplicative qualified as NHM
@@ -236,11 +236,7 @@ instance (Zero (->) a) => Zero (Diff p) a where
 -- (4,8)
 -- >>> pb (1, 1)
 -- (1,2)
-instance Tensor (,) (Diff p) where
-  tensor (Diff f) (Diff g) = Diff $ \(a, c) ->
-    let (b, fb) = f a; (d, gd) = g c
-     in ((b, d), Data.Bifunctor.bimap fb gd)
-  {-# INLINE tensor #-}
+instance Unital (,) (Diff p) where
   unitl = Diff (\((), a) -> (a, ((),)))
   {-# INLINE unitl #-}
   unitl' = Diff (\a -> (((), a), \((), da) -> da))
@@ -249,6 +245,12 @@ instance Tensor (,) (Diff p) where
   {-# INLINE unitr #-}
   unitr' = Diff (\a -> ((a, ()), \(da, ()) -> da))
   {-# INLINE unitr' #-}
+
+instance Tensor (,) (Diff p) where
+  tensor (Diff f) (Diff g) = Diff $ \(a, c) ->
+    let (b, fb) = f a; (d, gd) = g c
+     in ((b, d), Data.Bifunctor.bimap fb gd)
+  {-# INLINE tensor #-}
 
 instance Action (,) (Diff p) where
   braid = Diff (\(a, b) -> ((b, a), \(db, da) -> (da, db)))

@@ -51,7 +51,7 @@ import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..), Strength (..), Traced (..))
 import Circuit.Diff (Diff, runDiff)
 import Circuit.Diff.Jet (Jet (..), constant, variable)
-import Circuit.Tensor (Action (..), Tensor (..))
+import Circuit.Tensor (Action (..), Tensor (..), Unital (..))
 import Data.Proxy (Proxy (..))
 import GHC.TypeNats (KnownNat, Nat, natVal, someNatVal)
 import NumHask.Algebra.Additive qualified as NA
@@ -116,11 +116,7 @@ instance Strength (,) (Taylor n) where
     VP a b -> VP a (f b)
   {-# INLINE strength #-}
 
-instance Tensor (,) (Taylor n) where
-  tensor (Taylor f) (Taylor g) = Taylor $ \case
-    VP x y -> VP (f x) (g y)
-  {-# INLINE tensor #-}
-
+instance Unital (,) (Taylor n) where
   unitl = Taylor $ \case
     VP VT x -> x
   {-# INLINE unitl #-}
@@ -134,6 +130,11 @@ instance Tensor (,) (Taylor n) where
 
   unitr' = Taylor $ \x -> VP x VT
   {-# INLINE unitr' #-}
+
+instance Tensor (,) (Taylor n) where
+  tensor (Taylor f) (Taylor g) = Taylor $ \case
+    VP x y -> VP (f x) (g y)
+  {-# INLINE tensor #-}
 
 instance Action (,) (Taylor n) where
   braid = Taylor $ \case

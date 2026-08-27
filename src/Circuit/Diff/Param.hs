@@ -43,7 +43,7 @@ import Circuit.Bimonoid qualified as CB
 import Circuit.Category (Category (..))
 import Circuit.Channel (Channel (..))
 import Circuit.Diff (Diff (..), runDiff)
-import Circuit.Tensor (Action (..), Tensor (..))
+import Circuit.Tensor (Action (..), Tensor (..), Unital (..))
 import Prelude hiding (id, (.))
 
 -- $setup
@@ -170,6 +170,16 @@ instance (MergeZero (->) p) => Channel (,) (DiffP p) where
 -- (4,8)
 -- >>> pb (1, 1)
 -- ((1,2),())
+instance (MergeZero (->) p) => Unital (,) (DiffP p) where
+  unitl = DiffP $ \_ ((), a) -> (a, \da -> (((), da), CB.zero ()))
+  {-# INLINE unitl #-}
+  unitl' = DiffP $ \_ a -> (((), a), \((), da) -> (da, CB.zero ()))
+  {-# INLINE unitl' #-}
+  unitr = DiffP $ \_ (a, ()) -> (a, \da -> ((da, ()), CB.zero ()))
+  {-# INLINE unitr #-}
+  unitr' = DiffP $ \_ a -> ((a, ()), \(da, ()) -> (da, CB.zero ()))
+  {-# INLINE unitr' #-}
+
 instance (MergeZero (->) p) => Tensor (,) (DiffP p) where
   tensor (DiffP f) (DiffP g) = DiffP $ \p (a, c) ->
     let (b, fBack) = f p a
@@ -181,14 +191,6 @@ instance (MergeZero (->) p) => Tensor (,) (DiffP p) where
              in ((da, dc), CB.plus (dpF, dpG))
         )
   {-# INLINE tensor #-}
-  unitl = DiffP $ \_ ((), a) -> (a, \da -> (((), da), CB.zero ()))
-  {-# INLINE unitl #-}
-  unitl' = DiffP $ \_ a -> (((), a), \((), da) -> (da, CB.zero ()))
-  {-# INLINE unitl' #-}
-  unitr = DiffP $ \_ (a, ()) -> (a, \da -> ((da, ()), CB.zero ()))
-  {-# INLINE unitr #-}
-  unitr' = DiffP $ \_ a -> ((a, ()), \(da, ()) -> (da, CB.zero ()))
-  {-# INLINE unitr' #-}
 
 instance (MergeZero (->) p) => Action (,) (DiffP p) where
   braid = DiffP $ \_ (a, b) -> ((b, a), \(db, da) -> ((da, db), CB.zero ()))
