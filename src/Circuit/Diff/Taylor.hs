@@ -48,7 +48,7 @@ where
 
 import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), Zero (..))
 import Circuit.Category (Category (..))
-import Circuit.Channel (Channel (..), Strength (..), Traced (..))
+import Circuit.Traced (Assoc (..), Slide (..), Strength (..), Yank (..))
 import Circuit.Diff (Diff, runDiff)
 import Circuit.Diff.Jet (Jet (..), constant, variable)
 import Circuit.Tensor (Action (..), Tensor (..), Unital (..))
@@ -98,7 +98,7 @@ instance Category (Taylor n) where
 -- Cartesian structural maps
 -- ---------------------------------------------------------------------------
 
-instance Channel (,) (Taylor n) where
+instance Assoc (,) (Taylor n) where
   assoc = Taylor $ \case
     VP (VP x y) z -> VP x (VP y z)
   {-# INLINE assoc #-}
@@ -107,6 +107,7 @@ instance Channel (,) (Taylor n) where
     VP x (VP y z) -> VP (VP x y) z
   {-# INLINE assoc' #-}
 
+instance Slide (,) (Taylor n) where
   slide = Taylor $ \case
     VP x (VP y z) -> VP y (VP x z)
   {-# INLINE slide #-}
@@ -145,11 +146,11 @@ instance Action (,) (Taylor n) where
 -- Trace: lazy knot on the value shape
 -- ---------------------------------------------------------------------------
 
-instance Traced (,) (Taylor n) where
-  trace (Taylor body) = Taylor $ \b ->
+instance Yank (,) (Taylor n) where
+  yank (Taylor body) = Taylor $ \b ->
     let VP a c = body (VP a b)
      in c
-  {-# INLINE trace #-}
+  {-# INLINE yank #-}
 
 -- ---------------------------------------------------------------------------
 -- Bimonoid structure for the unit and for scalar 'Double'

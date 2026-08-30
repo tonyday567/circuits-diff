@@ -7,13 +7,13 @@ import Circuit qualified
 import Circuit.Bimonoid qualified as Bm
 import Circuit.Body (Body (..))
 import Circuit.Category ((.))
-import Circuit.Channel (Traced (..))
+import Circuit.Traced (Yank (..))
 import Circuit.Diff.Backprop (linearizeAt, linearizeBody)
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
-import Circuit.Net (Net, lift, widen)
+import Circuit.Net (Net, widen)
 import Circuit.Pullback (Pullback (..), evalPullback)
 import Circuit.SMC qualified as SMC
-import Circuit.Syntax (eval)
+import Circuit.Syntax (Syntax (..), eval)
 import Circuit.Tensor (Tensor (..))
 import DiffCarrierTests (runDiffCarrierTests)
 import Kepler (runKeplerTests)
@@ -46,7 +46,7 @@ constD c = Diff (const (c, const 0))
 
 -- | Net computing 2*x^2 via copy, parallel squares, then add.
 quadNet :: Net (,) Diff' Double Double
-quadNet = lift (Bm.plusT @(,) @Diff' @Double) . widen (tensor (SMC.lift sq) (SMC.lift sq)) . lift (Bm.copyT @(,) @Diff' @Double)
+quadNet = Lift (Bm.plusT @(,) @Diff' @Double) . widen (tensor (Lift sq) (Lift sq)) . Lift (Bm.copyT @(,) @Diff' @Double)
 
 -- | Linear feedback loop: x' = 0.3*x + 2*b, c = x + b.
 loopBody :: Diff' (Double, Double) (Double, Double)
@@ -99,7 +99,7 @@ main = do
   assert "gradient" (pb5 1.0) (-0.25)
 
   putStrLn "Trace Diff Either (scale-by-n loop)"
-  let scaleByN n = trace body
+  let scaleByN n = yank body
         where
           body :: Diff' (Either (Int, Double, Double) Double) (Either (Int, Double, Double) Double)
           body = Diff $ \case

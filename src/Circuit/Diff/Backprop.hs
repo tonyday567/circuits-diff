@@ -39,7 +39,7 @@ import Circuit.Body (Body (..))
 import Circuit.Category ((.))
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Diff.Circuit ()
-import Circuit.Net (Net, braid, lift, widen)
+import Circuit.Net (Net, widen)
 import Circuit.Pullback (Pullback (..))
 import Circuit.SMC (SMC, SigPar (..), SigSwap (..))
 import Circuit.SMC qualified as SMC
@@ -120,8 +120,8 @@ linearizeNet ::
 linearizeNet n a = case n of
   Lift d ->
     let (y, pb) = runDiff d a
-     in (y, lift (Pullback pb))
-  Op op -> case op of
+     in (y, Lift (Pullback pb))
+  Oper op -> case op of
     L (SigCompose g f) ->
       let (b, f') = linearizeNet f a
           (c, g') = linearizeNet g b
@@ -130,22 +130,22 @@ linearizeNet n a = case n of
       let (a1, a2) = a
           (b, f') = linearizeNet f a1
           (d, g') = linearizeNet g a2
-       in ((b, d), Op (R (L (SigPar f' g'))))
+       in ((b, d), Oper (R (L (SigPar f' g'))))
     R (R (L SigSwap)) ->
       let (u, v) = a
-       in ((v, u), braid)
+       in ((v, u), Oper (R (R (L SigSwap))))
     R (R (R (L SigCopy))) ->
       let (out, pb) = runDiff (copyT @(,) @(Diff p)) a
-       in (out, lift (Pullback pb))
+       in (out, Lift (Pullback pb))
     R (R (R (R (L SigDiscard)))) ->
       let (out, pb) = runDiff (discardT @(,) @(Diff p)) a
-       in (out, lift (Pullback pb))
+       in (out, Lift (Pullback pb))
     R (R (R (R (R (L SigPlus))))) ->
       let (out, pb) = runDiff (plusT @(,) @(Diff p)) a
-       in (out, lift (Pullback pb))
+       in (out, Lift (Pullback pb))
     R (R (R (R (R (R SigZero))))) ->
       let (out, pb) = runDiff (zeroT @(,) @(Diff p)) ()
-       in (out, lift (Pullback pb))
+       in (out, Lift (Pullback pb))
 
 -- | Pointwise linearization over the core 'Body' language.
 --

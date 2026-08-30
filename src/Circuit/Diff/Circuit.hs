@@ -30,7 +30,7 @@ where
 import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 import Circuit.Bimonoid qualified as CB
 import Circuit.Category (Category (..))
-import Circuit.Channel (Channel (..), Strength (..), Traced (..))
+import Circuit.Traced (Assoc (..), Slide (..), Strength (..), Yank (..))
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Tensor (Action (..), Tensor (..), Unital (..))
 import Data.Bifunctor
@@ -82,8 +82,8 @@ instance Category (Diff p) where
 -- because GHC's heap holds the graph.  For linear backward maps this is a
 -- Neumann series computed lazily; for general maps it is the implicit function
 -- theorem as a lazy knot.
-instance Traced (,) (Diff p) where
-  trace (Diff body) = Diff $ \b ->
+instance Yank (,) (Diff p) where
+  yank (Diff body) = Diff $ \b ->
     let -- Forward: standard lazy knot
         ~((a, c), backward) = body (a, b)
         -- Backward: same shape, transposed — knot through the pair
@@ -93,13 +93,15 @@ instance Traced (,) (Diff p) where
      in (c, pullback)
 
 -- | Cartesian channel plumbing for 'Diff.
-instance Channel (,) (Diff p) where
+instance Assoc (,) (Diff p) where
   assoc = Diff (\((s, s'), x) -> ((s, (s', x)), \(s'', (s''', x')) -> ((s'', s'''), x')))
   assoc' = Diff (\(s, (s', x)) -> (((s, s'), x), \((s'', s'''), x') -> (s'', (s''', x'))))
+
+instance Slide (,) (Diff p) where
   slide = Diff (\(s, (s', x)) -> ((s', (s, x)), \(s'', (s''', x')) -> (s''', (s'', x'))))
 
 -- | Cocartesian channel plumbing for 'Diff.
-instance Channel Either (Diff p) where
+instance Assoc Either (Diff p) where
   assoc =
     Diff
       ( \case
@@ -114,6 +116,8 @@ instance Channel Either (Diff p) where
           Right (Left b) -> (Left (Right b), \case Left (Right db) -> Right (Left db); _ -> error "assoc'")
           Right (Right c) -> (Right c, \case Right dc -> Right (Right dc); _ -> error "assoc'")
       )
+
+instance Slide Either (Diff p) where
   slide =
     Diff
       ( \case
@@ -157,8 +161,8 @@ instance Strength Either (Diff p) where
 -- is in.  Every honest pullback maps an output-tagged cotangent to an
 -- input-tagged one; the replay errors loudly on any mismatch rather
 -- than misreading a dishonest primitive.
-instance Traced Either (Diff p) where
-  trace (Diff body) = Diff $ \b ->
+instance Yank Either (Diff p) where
+  yank (Diff body) = Diff $ \b ->
     let -- Forward: iterate, collecting pullbacks in execution order.
         goFwd x =
           let (y, pb) = body x
@@ -347,7 +351,7 @@ traceStarFrom x0 n (Diff body) = Diff $ \b ->
 -- @Circuit.Diff.Star.traceStarMatrix@ (vector channel, solved by
 -- 'Circuit.Mat.Dense.starMatrix' — the bridge made literal).
 traceStar :: Diff p (j, b) (j, c) -> Diff p b c
-traceStar = trace
+traceStar = yank
 
 -- | Iterated trace for strict carriers.
 --

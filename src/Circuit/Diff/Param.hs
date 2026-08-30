@@ -41,7 +41,7 @@ where
 import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
 import Circuit.Bimonoid qualified as CB
 import Circuit.Category (Category (..))
-import Circuit.Channel (Channel (..))
+import Circuit.Traced (Assoc (..), Slide (..), Strength (..), Yank (..))
 import Circuit.Diff (Diff (..), runDiff)
 import Circuit.Tensor (Action (..), Tensor (..), Unital (..))
 import Prelude hiding (id, (.))
@@ -142,13 +142,14 @@ instance (MergeZero (->) p) => Category (DiffP p) where
 -- The superclass 'Category (DiffP p)' requires 'MergeZero (->) p', so the
 -- instance carries the same constraint even though the structural maps
 -- themselves ignore the parameter.
-instance (MergeZero (->) p) => Channel (,) (DiffP p) where
+instance (MergeZero (->) p) => Assoc (,) (DiffP p) where
   assoc = DiffP $ \_ ((a, b), c) -> ((a, (b, c)), \(da, (db, dc)) -> (((da, db), dc), CB.zero ()))
   {-# INLINE assoc #-}
 
   assoc' = DiffP $ \_ (a, (b, c)) -> (((a, b), c), \((da, db), dc) -> ((da, (db, dc)), CB.zero ()))
   {-# INLINE assoc' #-}
 
+instance (MergeZero (->) p) => Slide (,) (DiffP p) where
   slide = DiffP $ \_ (a, (b, c)) -> ((b, (a, c)), \(db, (da, dc)) -> ((da, (db, dc)), CB.zero ()))
   {-# INLINE slide #-}
 
