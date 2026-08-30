@@ -51,9 +51,11 @@ import NumHask.Prelude hiding ((.))
 -- >>> import Circuit.Category ((.))
 -- >>> import Circuit.Diff
 -- >>> import Circuit.Bimonoid qualified as Bm
--- >>> import Circuit.Net (Net, lift, widen)
+-- >>> import Circuit.Layer (unit)
+-- >>> import Circuit.Net (Net, widen)
 -- >>> import Circuit.Pullback (Pullback (..), evalPullback)
 -- >>> import Circuit.SMC qualified as SMC
+-- >>> import Circuit.Syntax (Syntax (Lift))
 -- >>> import Circuit.Tensor (Tensor (..))
 -- >>> import Prelude hiding (id, (.))
 
@@ -78,9 +80,9 @@ import NumHask.Prelude hiding ((.))
 -- at a single output cotangent.
 --
 -- >>> let sq = Diff (\x -> (x * x, \d -> 2 * x * d)) :: Diff' Double Double
--- >>> let copyN = lift (Bm.copyT @(,) @Diff' @Double) :: Net (,) Diff' Double (Double, Double)
--- >>> let plusN = lift (Bm.plusT @(,) @Diff' @Double) :: Net (,) Diff' (Double, Double) Double
--- >>> let parN = widen (tensor (SMC.lift sq) (SMC.lift sq)) :: Net (,) Diff' (Double, Double) (Double, Double)
+-- >>> let copyN = unit (Bm.copyT @(,) @Diff' @Double) :: Net (,) Diff' Double (Double, Double)
+-- >>> let plusN = unit (Bm.plusT @(,) @Diff' @Double) :: Net (,) Diff' (Double, Double) Double
+-- >>> let parN = widen (tensor (Lift sq) (Lift sq)) :: Net (,) Diff' (Double, Double) (Double, Double)
 -- >>> let n = plusN . parN . copyN :: Net (,) Diff' Double Double
 -- >>> let (y, g) = linearizeAt n 3.0
 -- >>> y
