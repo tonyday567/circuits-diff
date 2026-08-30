@@ -48,10 +48,10 @@ where
 
 import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), Zero (..))
 import Circuit.Category (Category (..))
-import Circuit.Traced (Assoc (..), Slide (..), Strength (..), Yank (..))
 import Circuit.Diff (Diff, runDiff)
 import Circuit.Diff.Jet (Jet (..), constant, variable)
 import Circuit.Tensor (Action (..), Tensor (..), Unital (..))
+import Circuit.Traced (Assoc (..), Slide (..), Strength (..), Yank (..))
 import Data.Proxy (Proxy (..))
 import GHC.TypeNats (KnownNat, Nat, natVal, someNatVal)
 import NumHask.Algebra.Additive qualified as NA

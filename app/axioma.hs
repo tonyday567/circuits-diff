@@ -7,7 +7,6 @@ import Circuit qualified
 import Circuit.Bimonoid qualified as Bm
 import Circuit.Body (Body (..))
 import Circuit.Category ((.))
-import Circuit.Traced (Yank (..))
 import Circuit.Diff.Backprop (linearizeAt, linearizeBody)
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
 import Circuit.Net (Net, widen)
@@ -15,6 +14,7 @@ import Circuit.Pullback (Pullback (..), evalPullback)
 import Circuit.SMC qualified as SMC
 import Circuit.Syntax (Syntax (..), eval)
 import Circuit.Tensor (Tensor (..))
+import Circuit.Traced (Yank (..))
 import DiffCarrierTests (runDiffCarrierTests)
 import Kepler (runKeplerTests)
 import MatrixStar (runMatrixStarTests)
