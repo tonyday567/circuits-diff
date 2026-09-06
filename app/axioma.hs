@@ -2,7 +2,7 @@
 
 module Main (main) where
 
-import Circuit (Trace, base)
+import Circuit (Syntax (Lift), Trace)
 import Circuit qualified
 import Circuit.Bimonoid qualified as Bm
 import Circuit.Body (Body (..))
@@ -11,7 +11,7 @@ import Circuit.Diff.Backprop (linearizeAt, linearizeBody)
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
 import Circuit.Net (Net, widen)
 import Circuit.Pullback (Pullback (..), evalPullback)
-import Circuit.SMC qualified as SMC
+import Circuit.Net qualified as SMC
 import Circuit.Syntax (Syntax (..), eval)
 import Circuit.Tensor (Tensor (..))
 import Circuit.Traced (Yank (..))
@@ -68,7 +68,7 @@ main = do
   assert "gradient" (pbLoop 1.0) (1.0 / (1.0 - 0.3) * 2.0 + 1.0)
 
   putStrLn "direct primitive via run"
-  let (yPrim, pbPrim) = runDiff (eval (Circuit.base sq :: Trace (,) Diff' Double Double)) 3.0
+  let (yPrim, pbPrim) = runDiff (eval (Lift sq :: Trace (,) Diff' Double Double)) 3.0
   assert "value" yPrim 9.0
   assert "gradient" (pbPrim 1.0) 6.0
 

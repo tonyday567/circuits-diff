@@ -41,8 +41,8 @@ import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Diff.Circuit ()
 import Circuit.Net (Net, widen)
 import Circuit.Pullback (Pullback (..))
-import Circuit.SMC (SMC, SigPar (..), SigSwap (..))
-import Circuit.SMC qualified as SMC
+import Circuit.Net (SMC, SigPar (..), SigSwap (..))
+import Circuit.Net qualified as SMC
 import Circuit.Syntax (SigCompose (..), Syntax (..), (:+:) (..))
 import Circuit.Tensor (Tensor (..))
 import NumHask.Prelude hiding ((.))
@@ -54,7 +54,7 @@ import NumHask.Prelude hiding ((.))
 -- >>> import Circuit.Layer (unit)
 -- >>> import Circuit.Net (Net, widen)
 -- >>> import Circuit.Pullback (Pullback (..), evalPullback)
--- >>> import Circuit.SMC qualified as SMC
+-- >>> import Circuit.Net qualified as SMC
 -- >>> import Circuit.Syntax (Syntax (Lift))
 -- >>> import Circuit.Tensor (Tensor (..))
 -- >>> import Prelude hiding (id, (.))
