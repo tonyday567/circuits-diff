@@ -37,7 +37,7 @@ module Circuit.Diff.Jet
 where
 
 import Circuit.Diff (Diff, runDiff)
-import Circuit.Process qualified as CP (Mealy (..), scan)
+import Circuit.Process qualified as CP (Moore (..), scan)
 import NumHask.Algebra.Additive (Additive (..), Subtractive (..), sum)
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..))
@@ -140,9 +140,9 @@ instance (Additive a, Multiplicative a) => Multiplicative (Jet a) where
 recipTailProcess ::
   (Subtractive a, Divisive a) =>
   a ->
-  CP.Mealy a a
+  CP.Moore a a
 recipTailProcess u0 =
-  CP.Mealy inject step extract
+  CP.Moore inject step extract
   where
     v0 = recip u0
     inject u = step ([v0], []) u
@@ -211,9 +211,9 @@ scale s (Jet cs) = Jet (map (s *) cs)
 sinCosTailProcess ::
   (TrigField a, FromInteger a) =>
   a ->
-  CP.Mealy a (a, a)
+  CP.Moore a (a, a)
 sinCosTailProcess u0 =
-  CP.Mealy inject step extract
+  CP.Moore inject step extract
   where
     s0 = sin u0
     c0 = cos u0
@@ -250,9 +250,9 @@ sinCosSeries u0 us =
 sqrtTailProcess ::
   (ExpField a) =>
   a ->
-  CP.Mealy a a
+  CP.Moore a a
 sqrtTailProcess u0 =
-  CP.Mealy inject step extract
+  CP.Moore inject step extract
   where
     v0 = sqrt u0
     twoV0 = v0 + v0
@@ -285,9 +285,9 @@ instance (FromInteger a) => FromInteger (Jet a) where
 expTailProcess ::
   (ExpField a, FromInteger a) =>
   a ->
-  CP.Mealy a a
+  CP.Moore a a
 expTailProcess u0 =
-  CP.Mealy inject step extract
+  CP.Moore inject step extract
   where
     v0 = exp u0
     inject u = step ([v0], []) u
