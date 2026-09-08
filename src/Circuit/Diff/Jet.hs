@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
 
 -- | Jets via truncated Taylor series.
@@ -36,8 +37,8 @@ module Circuit.Diff.Jet
   )
 where
 
+import Circuit.Cell qualified as CP (Moore, scan, pattern Moore)
 import Circuit.Diff (Diff, runDiff)
-import Circuit.Process qualified as CP (Moore (..), scan)
 import NumHask.Algebra.Additive (Additive (..), Subtractive (..), sum)
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..))
