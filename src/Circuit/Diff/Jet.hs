@@ -37,8 +37,8 @@ module Circuit.Diff.Jet
   )
 where
 
-import Circuit.Cell qualified as CP (Moore, scan, pattern Moore)
 import Circuit.Diff (Diff, runDiff)
+import Circuit.GMachine qualified as CP (Moore, scan, pattern Moore)
 import NumHask.Algebra.Additive (Additive (..), Subtractive (..), sum)
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..))
