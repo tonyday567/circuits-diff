@@ -12,7 +12,7 @@
 -- gradient net: the graph's structure is burned down into a straight linear
 -- (affine) cotangent map.
 --
--- For feedback-bearing circuits, use 'linearizeBody' on a 'Body' value.
+-- For feedback-bearing circuits, use 'linearizeBody' on a 'Stratum' value.
 -- The channel type stays exposed, so star-elimination can operate without
 -- recovering evidence from a hidden 'Loop.Knot'.
 module Circuit.Diff.Backprop
@@ -147,7 +147,7 @@ linearizeNet n a = case n of
       let (out, pb) = runDiff (zeroT @(,) @(Diff p)) ()
        in (out, Lift (Pullback pb))
 
--- | Pointwise linearization over the core 'Body' language.
+-- | Pointwise linearization over the core 'Stratum' language.
 --
 -- The channel type @s@ stays exposed, so the result can be fed directly to
 -- 'Circuit.Diff.Star.solveStarBody' without any coercion.

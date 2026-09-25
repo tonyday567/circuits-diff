@@ -27,7 +27,7 @@ module Circuit.Diff.Star
   ( -- * Polymorphic bridge
     traceStarMatrix,
 
-    -- * Body bridge
+    -- * Stratum bridge
     solveStarBody,
 
     -- * Double adapters (via 'FieldStar')
