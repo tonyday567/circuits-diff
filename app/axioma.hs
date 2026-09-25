@@ -5,10 +5,10 @@ module Main (main) where
 import Circuit (Syntax (Lift), Trace)
 import Circuit qualified
 import Circuit.Bimonoid qualified as Bm
-import Circuit.Body (Body (..))
 import Circuit.Category ((.))
 import Circuit.Diff.Backprop (linearizeAt, linearizeBody)
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
+import Circuit.GMachine (Stratum (..))
 import Circuit.Net (Net, widen)
 import Circuit.Net qualified as SMC
 import Circuit.Pullback (Pullback (..), evalPullback)
@@ -120,7 +120,7 @@ main = do
               ((0.0, x + 2.0 * b), \(_, dc) -> (dc, 2.0 * dc))
           ) ::
           Diff' (Double, Double) (Double, Double)
-      netBody = Body $ Diff $ \(s, (x, b)) ->
+      netBody = Stratum $ Diff $ \(s, (x, b)) ->
         let (ySq, sqPb) = runDiff sq x
             ((s', o), innerPb) = runDiff innerBody (s, b)
             pb (ds, (dy, do_)) =

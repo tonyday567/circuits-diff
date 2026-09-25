@@ -38,9 +38,9 @@ where
 
 import Circuit.Bimonoid (Merge, MergeZero, Zero)
 import Circuit.Bimonoid qualified as CB
-import Circuit.Body (Body (..))
 import Circuit.Diff.Circuit (Diff (..), traceStarFrom)
 import Circuit.Diff.Evidence (StarChannel (..))
+import Circuit.GMachine (Stratum (..))
 import Circuit.Mat.Dense (fromLists, matVec)
 import Circuit.Mat.Dense qualified as MD
 import Circuit.Pullback (Pullback (..))
@@ -51,7 +51,7 @@ import NumHask.Free.Carriers (FieldStar (..))
 import NumHask.Prelude
 
 -- $setup
--- >>> import Circuit.Body (Body (..))
+-- >>> import Circuit.GMachine (Stratum (..))
 -- >>> import Circuit.Diff.Circuit
 -- >>> import Circuit.Diff.Evidence (StarChannel (..), fieldStarChannel, withStarChannel)
 -- >>> import Circuit.Pullback (Pullback (..))
@@ -256,7 +256,7 @@ solveAffine body dc =
 --
 -- >>> :{
 -- let body (FieldStar dj, dc) = (FieldStar (0.3 * dj + 2.0 * dc), dj)
---     b = Body (withStarChannel fieldStarChannel (Pullback body)) :: Body (,) (StarChannel FieldStar) Pullback Double Double
+--     b = Stratum (withStarChannel fieldStarChannel (Pullback body)) :: Stratum (,) (StarChannel FieldStar) Pullback Double Double
 -- :}
 --
 -- >>> let solved = solveStarBody b
@@ -264,6 +264,6 @@ solveAffine body dc =
 -- True
 solveStarBody ::
   forall s a b.
-  Body (,) (StarChannel s) Pullback b a ->
+  Stratum (,) (StarChannel s) Pullback b a ->
   Pullback b a
-solveStarBody (Body f) = Pullback (solveAffine (runPullback f))
+solveStarBody (Stratum f) = Pullback (solveAffine (runPullback f))

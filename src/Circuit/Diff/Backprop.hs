@@ -35,10 +35,10 @@ import Circuit.Bimonoid
     SigZero (..),
     ZeroT (..),
   )
-import Circuit.Body (Body (..))
 import Circuit.Category ((.))
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Diff.Circuit ()
+import Circuit.GMachine (Stratum (..))
 import Circuit.Net (Net, SMC, SigPar (..), SigSwap (..), widen)
 import Circuit.Net qualified as SMC
 import Circuit.Pullback (Pullback (..))
@@ -159,9 +159,9 @@ linearizeNet n a = case n of
 -- form by 'Circuit.Diff.Star.solveStarBody'.
 linearizeBody ::
   forall p s a b.
-  Body (,) s (Diff p) a b ->
+  Stratum (,) s (Diff p) a b ->
   a ->
-  (b, Body (,) s Pullback b a)
-linearizeBody (Body f) a =
+  (b, Stratum (,) s Pullback b a)
+linearizeBody (Stratum f) a =
   let ~((s, b), pb) = runDiff f (s, a)
-   in (b, Body (Pullback pb))
+   in (b, Stratum (Pullback pb))
