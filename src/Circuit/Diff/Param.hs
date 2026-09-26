@@ -42,7 +42,7 @@ import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), MergeZero, Zero (.
 import Circuit.Bimonoid qualified as CB
 import Circuit.Category (Category (..))
 import Circuit.Diff (Diff (..), runDiff)
-import Circuit.Tensor (Action (..), Tensor (..), Unital (..))
+import Circuit.Tensor (Action (..), SemiTensor (..), Tensor, Unital (..))
 import Circuit.Traced (Assoc (..), Slide (..), Strength (..), Yank (..))
 import Prelude hiding (id, (.))
 
@@ -50,7 +50,7 @@ import Prelude hiding (id, (.))
 -- >>> import Circuit.Diff.Param
 -- >>> import Circuit.Category (Category (..))
 -- >>> import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
--- >>> import Circuit.Tensor (Action (..), Tensor (..))
+-- >>> import Circuit.Tensor (Action (..), SemiTensor (..), Tensor)
 -- >>> import Circuit.Diff (Diff (..), Diff', runDiff)
 -- >>> import Prelude hiding (id, (.))
 
@@ -181,7 +181,7 @@ instance (MergeZero (->) p) => Unital (,) (DiffP p) where
   unitr' = DiffP $ \_ a -> ((a, ()), \(da, ()) -> (da, CB.zero ()))
   {-# INLINE unitr' #-}
 
-instance (MergeZero (->) p) => Tensor (,) (DiffP p) where
+instance (MergeZero (->) p) => SemiTensor (,) (DiffP p) where
   tensor (DiffP f) (DiffP g) = DiffP $ \p (a, c) ->
     let (b, fBack) = f p a
         (d, gBack) = g p c
@@ -192,6 +192,8 @@ instance (MergeZero (->) p) => Tensor (,) (DiffP p) where
              in ((da, dc), CB.plus (dpF, dpG))
         )
   {-# INLINE tensor #-}
+
+instance (MergeZero (->) p) => Tensor (,) (DiffP p)
 
 instance (MergeZero (->) p) => Action (,) (DiffP p) where
   braid = DiffP $ \_ (a, b) -> ((b, a), \(db, da) -> ((da, db), CB.zero ()))

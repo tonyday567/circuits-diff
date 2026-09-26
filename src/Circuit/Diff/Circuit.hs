@@ -31,7 +31,7 @@ import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), MergeZero, Zero (.
 import Circuit.Bimonoid qualified as CB
 import Circuit.Category (Category (..))
 import Circuit.Diff (Diff (..), Diff', runDiff)
-import Circuit.Tensor (Action (..), Tensor (..), Unital (..))
+import Circuit.Tensor (Action (..), SemiTensor (..), Tensor, Unital (..))
 import Circuit.Traced (Assoc (..), Slide (..), Strength (..), Yank (..))
 import Data.Bifunctor
 import NumHask.Algebra.Additive qualified as NHA
@@ -41,7 +41,7 @@ import Prelude hiding (id, (.))
 
 -- $setup
 -- >>> import Circuit.Bimonoid (Copy (..), Merge (..))
--- >>> import Circuit.Tensor (Action (..), Tensor (..))
+-- >>> import Circuit.Tensor (Action (..), SemiTensor (..), Tensor)
 
 -- | 'Circuit.Category.Category' for 'Diff'.
 --
@@ -250,11 +250,13 @@ instance Unital (,) (Diff p) where
   unitr' = Diff (\a -> ((a, ()), \(da, ()) -> da))
   {-# INLINE unitr' #-}
 
-instance Tensor (,) (Diff p) where
+instance SemiTensor (,) (Diff p) where
   tensor (Diff f) (Diff g) = Diff $ \(a, c) ->
     let (b, fb) = f a; (d, gd) = g c
      in ((b, d), Data.Bifunctor.bimap fb gd)
   {-# INLINE tensor #-}
+
+instance Tensor (,) (Diff p)
 
 instance Action (,) (Diff p) where
   braid = Diff (\(a, b) -> ((b, a), \(db, da) -> (da, db)))

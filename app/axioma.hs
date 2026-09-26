@@ -13,7 +13,7 @@ import Circuit.Net (Net, widen)
 import Circuit.Net qualified as SMC
 import Circuit.Pullback (Pullback (..), evalPullback)
 import Circuit.Syntax (Syntax (..), eval)
-import Circuit.Tensor (Tensor (..))
+import Circuit.Tensor (SemiTensor (..), Tensor)
 import Circuit.Traced (Yank (..))
 import DiffCarrierTests (runDiffCarrierTests)
 import Kepler (runKeplerTests)

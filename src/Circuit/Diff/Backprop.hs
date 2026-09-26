@@ -43,7 +43,7 @@ import Circuit.Net (Net, SMC, SigPar (..), SigSwap (..), widen)
 import Circuit.Net qualified as SMC
 import Circuit.Pullback (Pullback (..))
 import Circuit.Syntax (SigCompose (..), Syntax (..), (:+:) (..))
-import Circuit.Tensor (Tensor (..))
+import Circuit.Tensor (Tensor)
 import NumHask.Prelude hiding ((.))
 
 -- $setup
@@ -54,7 +54,7 @@ import NumHask.Prelude hiding ((.))
 -- >>> import Circuit.Pullback (Pullback (..), evalPullback)
 -- >>> import Circuit.Net qualified as SMC
 -- >>> import Circuit.Syntax (Layer (unit), Syntax (Lift))
--- >>> import Circuit.Tensor (Tensor (..))
+-- >>> import Circuit.Tensor (SemiTensor (..), Tensor)
 -- >>> import Prelude hiding (id, (.))
 
 -- | Pointwise linearization: run a 'Net' of 'Diff' primitives forward at @a@
