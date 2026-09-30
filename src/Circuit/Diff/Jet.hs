@@ -38,7 +38,7 @@ module Circuit.Diff.Jet
 where
 
 import Circuit.Diff (Diff, runDiff)
-import Circuit.GMachine qualified as CP (Moore, scan, pattern Moore)
+import Circuit.GMachine qualified as CP (Moore, moore, scan)
 import NumHask.Algebra.Additive (Additive (..), Subtractive (..), sum)
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..))
@@ -143,7 +143,7 @@ recipTailProcess ::
   a ->
   CP.Moore a a
 recipTailProcess u0 =
-  CP.Moore inject step extract
+  CP.moore inject step extract
   where
     v0 = recip u0
     inject u = step ([v0], []) u
@@ -214,7 +214,7 @@ sinCosTailProcess ::
   a ->
   CP.Moore a (a, a)
 sinCosTailProcess u0 =
-  CP.Moore inject step extract
+  CP.moore inject step extract
   where
     s0 = sin u0
     c0 = cos u0
@@ -253,7 +253,7 @@ sqrtTailProcess ::
   a ->
   CP.Moore a a
 sqrtTailProcess u0 =
-  CP.Moore inject step extract
+  CP.moore inject step extract
   where
     v0 = sqrt u0
     twoV0 = v0 + v0
@@ -288,7 +288,7 @@ expTailProcess ::
   a ->
   CP.Moore a a
 expTailProcess u0 =
-  CP.Moore inject step extract
+  CP.moore inject step extract
   where
     v0 = exp u0
     inject u = step ([v0], []) u
