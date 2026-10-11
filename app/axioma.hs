@@ -8,7 +8,7 @@ import Circuit.Bimonoid qualified as Bm
 import Circuit.Category ((.))
 import Circuit.Diff.Backprop (linearizeAt, linearizeBody)
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
-import Circuit.GMachine (Stratum (..))
+import Circuit.Machine (Step (..))
 import Circuit.Net (Net, widen)
 import Circuit.Net qualified as SMC
 import Circuit.Pullback (Pullback (..), evalPullback)
@@ -120,7 +120,7 @@ main = do
               ((0.0, x + 2.0 * b), \(_, dc) -> (dc, 2.0 * dc))
           ) ::
           Diff' (Double, Double) (Double, Double)
-      netBody = Stratum $ Diff $ \(s, (x, b)) ->
+      netBody = Step $ Diff $ \(s, (x, b)) ->
         let (ySq, sqPb) = runDiff sq x
             ((s', o), innerPb) = runDiff innerBody (s, b)
             pb (ds, (dy, do_)) =
@@ -129,7 +129,7 @@ main = do
                in (dsIn, (dx, db))
          in ((s', (ySq, o)), pb)
       (y7, g7) = linearizeBody netBody (3.0, 4.0)
-      (_, (gx, gb)) = runPullback (morphism g7) (0.0, (1.0, 1.0))
+      (_, (gx, gb)) = runPullback (run g7) (0.0, (1.0, 1.0))
   assert "value fst" (fst y7) 9.0
   assert "value snd" (snd y7) 8.0
   assert "gradient x" gx 6.0

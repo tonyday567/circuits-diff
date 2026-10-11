@@ -15,7 +15,7 @@ import Circuit.Diff.Evidence
     withStarChannelDiff,
   )
 import Circuit.Diff.Star (solveStarBody)
-import Circuit.GMachine (Stratum (..))
+import Circuit.Machine (Step (..))
 import Circuit.Pullback (Pullback (..))
 import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Multiplicative qualified as NHM
@@ -37,9 +37,9 @@ assert name got expected =
 --
 -- The trace equation is @dx = 0.5*dx + dc@, solved by @dx = 2*dc@.
 -- Then @db = dx + 2*dc = 4*dc@.
-scalarKnot :: Stratum (,) (StarChannel FieldStar) Pullback FieldStar FieldStar
+scalarKnot :: Step (,) (,) (StarChannel FieldStar) (StarChannel FieldStar) Pullback FieldStar FieldStar
 scalarKnot =
-  Stratum $
+  Step $
     withStarChannel fieldStarChannel $
       Pullback
         ( \(FieldStar dx, FieldStar dc) ->
@@ -80,14 +80,14 @@ runStarEliminateTests = do
                   ) ::
                     ([FieldStar], FieldStar)
           )
-      vecKnot = Stratum (withStarChannel (listStarChannel 2) vecBody)
+      vecKnot = Step (withStarChannel (listStarChannel 2) vecBody)
       eliminatedVec = solveStarBody vecKnot
       FieldStar gVec = runPullback eliminatedVec (FieldStar 1.0)
       expectedVec = (30.0 / 11.0) + (40.0 / 11.0) + 1.0
   assert "eliminated vector gradient" gVec expectedVec
 
   putStrLn "Star-eliminate via composition"
-  let scale3 = Stratum (Pullback (\(sc, FieldStar x) -> (sc, FieldStar (3.0 * x))))
+  let scale3 = Step (Pullback (\(sc, FieldStar x) -> (sc, FieldStar (3.0 * x))))
       nested = scale3 . scalarKnot
       eliminatedNested = solveStarBody nested
       FieldStar gNested = runPullback eliminatedNested (FieldStar 1.0)
@@ -106,10 +106,10 @@ runStarEliminateTests = do
               )
           ) ::
           Diff () (FieldStar, FieldStar) (FieldStar, FieldStar)
-      innerBody = Stratum (withStarChannelDiff fieldStarChannel innerBodyRaw)
+      innerBody = Step (withStarChannelDiff fieldStarChannel innerBodyRaw)
       (FieldStar y, g) = linearizeBody innerBody (FieldStar 4.0)
       gElim = solveStarBody g
-      (_, FieldStar gLazy) = runPullback (morphism g) (fieldStarChannel, FieldStar 1.0)
+      (_, FieldStar gLazy) = runPullback (run g) (fieldStarChannel, FieldStar 1.0)
       FieldStar gElimVal = runPullback gElim (FieldStar 1.0)
   assert "lazy-knot value" y 4.0
   assert "lazy-knot gradient" gLazy 1.0

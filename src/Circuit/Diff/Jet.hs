@@ -1,4 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RebindableSyntax #-}
 
 -- | Jets via truncated Taylor series.
@@ -38,7 +37,7 @@ module Circuit.Diff.Jet
 where
 
 import Circuit.Diff (Diff, runDiff)
-import Circuit.GMachine qualified as CP (Moore, moore, scan)
+import Circuit.Machine qualified as CP (MooreT, moore, scan)
 import NumHask.Algebra.Additive (Additive (..), Subtractive (..), sum)
 import NumHask.Algebra.Field (ExpField (..), TrigField (..))
 import NumHask.Algebra.Multiplicative (Divisive (..), Multiplicative (..))
@@ -141,7 +140,7 @@ instance (Additive a, Multiplicative a) => Multiplicative (Jet a) where
 recipTailProcess ::
   (Subtractive a, Divisive a) =>
   a ->
-  CP.Moore a a
+  CP.MooreT (,) (->) a a
 recipTailProcess u0 =
   CP.moore inject step extract
   where
@@ -212,7 +211,7 @@ scale s (Jet cs) = Jet (map (s *) cs)
 sinCosTailProcess ::
   (TrigField a, FromInteger a) =>
   a ->
-  CP.Moore a (a, a)
+  CP.MooreT (,) (->) a (a, a)
 sinCosTailProcess u0 =
   CP.moore inject step extract
   where
@@ -251,7 +250,7 @@ sinCosSeries u0 us =
 sqrtTailProcess ::
   (ExpField a) =>
   a ->
-  CP.Moore a a
+  CP.MooreT (,) (->) a a
 sqrtTailProcess u0 =
   CP.moore inject step extract
   where
@@ -286,7 +285,7 @@ instance (FromInteger a) => FromInteger (Jet a) where
 expTailProcess ::
   (ExpField a, FromInteger a) =>
   a ->
-  CP.Moore a a
+  CP.MooreT (,) (->) a a
 expTailProcess u0 =
   CP.moore inject step extract
   where

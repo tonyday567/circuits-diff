@@ -12,7 +12,7 @@
 -- gradient net: the graph's structure is burned down into a straight linear
 -- (affine) cotangent map.
 --
--- For feedback-bearing circuits, use 'linearizeBody' on a 'Stratum' value.
+-- For feedback-bearing circuits, use 'linearizeBody' on a 'Step' value.
 -- The channel type stays exposed, so star-elimination can operate without
 -- recovering evidence from a hidden 'Loop.Knot'.
 module Circuit.Diff.Backprop
@@ -38,7 +38,7 @@ import Circuit.Bimonoid
 import Circuit.Category ((.))
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Diff.Circuit ()
-import Circuit.GMachine (Stratum (..))
+import Circuit.Machine (Step (..))
 import Circuit.Net (Net, SMC, SigPar (..), SigSwap (..), widen)
 import Circuit.Net qualified as SMC
 import Circuit.Pullback (Pullback (..))
@@ -147,7 +147,7 @@ linearizeNet n a = case n of
       let (out, pb) = runDiff (zeroT @(,) @(Diff p)) ()
        in (out, Lift (Pullback pb))
 
--- | Pointwise linearization over the core 'Stratum' language.
+-- | Pointwise linearization over the core 'Step' language.
 --
 -- The channel type @s@ stays exposed, so the result can be fed directly to
 -- 'Circuit.Diff.Star.solveStarBody' without any coercion.
@@ -159,9 +159,9 @@ linearizeNet n a = case n of
 -- form by 'Circuit.Diff.Star.solveStarBody'.
 linearizeBody ::
   forall p s a b.
-  Stratum (,) s (Diff p) a b ->
+  Step (,) (,) s s (Diff p) a b ->
   a ->
-  (b, Stratum (,) s Pullback b a)
-linearizeBody (Stratum f) a =
+  (b, Step (,) (,) s s Pullback b a)
+linearizeBody (Step f) a =
   let ~((s, b), pb) = runDiff f (s, a)
-   in (b, Stratum (Pullback pb))
+   in (b, Step (Pullback pb))
