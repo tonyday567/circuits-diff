@@ -31,7 +31,7 @@ import Circuit.Bimonoid
     MergeT (..),
     SigCopy (..),
     SigDiscard (..),
-    SigPlus (..),
+    SigMerge (..),
     SigZero (..),
     ZeroT (..),
   )
@@ -67,7 +67,7 @@ import NumHask.Prelude hiding ((.))
 -- wiring.  Propagate fans values out in the forward direction; linearize
 -- straightens them into a wire in the reverse direction.
 --
--- This is the honest reverse-mode gradient net.  'transpose' alone is
+-- This is the honest reverse-mode gradient net.  'dagger' alone is
 -- only correct for linear nets; for nonlinear 'Diff' primitives the
 -- pullback closure depends on the primal point.  'linearizeAt' runs
 -- the net, captures each primitive's pullback at the point it saw,
@@ -79,7 +79,7 @@ import NumHask.Prelude hiding ((.))
 --
 -- >>> let sq = Diff (\x -> (x * x, \d -> 2 * x * d)) :: Diff' Double Double
 -- >>> let copyN = unit (Bm.copyT @(,) @Diff' @Double) :: Net (,) Diff' Double (Double, Double)
--- >>> let plusN = unit (Bm.plusT @(,) @Diff' @Double) :: Net (,) Diff' (Double, Double) Double
+-- >>> let plusN = unit (Bm.mergeT @(,) @Diff' @Double) :: Net (,) Diff' (Double, Double) Double
 -- >>> let parN = widen (tensor (Lift sq) (Lift sq)) :: Net (,) Diff' (Double, Double) (Double, Double)
 -- >>> let n = plusN . parN . copyN :: Net (,) Diff' Double Double
 -- >>> let (y, g) = linearizeAt n 3.0
@@ -100,9 +100,9 @@ fromDiffAt (Diff f) a = Pullback (snd (f a))
 -- | Run a 'Net' of 'Diff' primitives forward and build the transposed
 -- pullback net.
 --
--- Structural rows ('SigCopy', 'SigPlus', 'SigDiscard', 'SigZero') are
+-- Structural rows ('SigCopy', 'SigMerge', 'SigDiscard', 'SigZero') are
 -- converted to point-independent 'lift' pullbacks using the 'Diff'
--- dictionaries the constructors already carry (copy↦plus, plus↦dup,
+-- dictionaries the constructors already carry (copy↦merge, merge↦dup,
 -- discard↦zero, zero↦discard).
 linearizeAt ::
   forall p a b.
@@ -140,8 +140,8 @@ linearizeNet n a = case n of
     R (R (R (R (L SigDiscard)))) ->
       let (out, pb) = runDiff (discardT @(,) @(Diff p)) a
        in (out, Lift (Pullback pb))
-    R (R (R (R (R (L SigPlus))))) ->
-      let (out, pb) = runDiff (plusT @(,) @(Diff p)) a
+    R (R (R (R (R (L SigMerge))))) ->
+      let (out, pb) = runDiff (mergeT @(,) @(Diff p)) a
        in (out, Lift (Pullback pb))
     R (R (R (R (R (R SigZero))))) ->
       let (out, pb) = runDiff (zeroT @(,) @(Diff p)) ()

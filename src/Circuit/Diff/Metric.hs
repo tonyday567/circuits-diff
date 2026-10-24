@@ -2,8 +2,8 @@
 
 -- | Metric-aware transpose for differentiable arrows.
 --
--- A metric @g@ turns the bare dagger (transpose) of a 'Diff into the true
--- adjoint @g_a^-1 . J^T . g_b@.  The same combinator also supports
+-- A metric @g@ turns the bare 'Circuit.Bimonoid.dagger' of a 'Diff into the
+-- true adjoint @g_a^-1 . J^T . g_b@.  The same combinator also supports
 -- optimizer-style preconditioning, where @g@ is a diagonal metric
 -- @diag(sqrt v + eps)@ and only the lowering half is used.
 module Circuit.Diff.Metric

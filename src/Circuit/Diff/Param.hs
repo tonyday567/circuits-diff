@@ -42,15 +42,15 @@ import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), MergeZero, Zero (.
 import Circuit.Bimonoid qualified as CB
 import Circuit.Category (Category (..))
 import Circuit.Diff (Diff (..), runDiff)
-import Circuit.Tensor (Action (..), SemiTensor (..), Tensor, Unital (..))
-import Circuit.Traced (Assoc (..), Slide (..), Strength (..), Yank (..))
+import Circuit.Tensor (SemiTensor (..), Symmetric (..), Tensor, Unital (..))
+import Circuit.Traced (Assoc (..), OuterSwap (..), Strength (..), Trace (..))
 import Prelude hiding (id, (.))
 
 -- $setup
 -- >>> import Circuit.Diff.Param
 -- >>> import Circuit.Category (Category (..))
 -- >>> import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), MergeZero, Zero (..))
--- >>> import Circuit.Tensor (Action (..), SemiTensor (..), Tensor)
+-- >>> import Circuit.Tensor (SemiTensor (..), Symmetric (..), Tensor)
 -- >>> import Circuit.Diff (Diff (..), Diff', runDiff)
 -- >>> import Prelude hiding (id, (.))
 
@@ -97,7 +97,7 @@ toPrim (DiffP f) = TensorPrim (\p a -> fst (f p a)) (\p a db -> snd (f p a) db)
 --
 -- Identity returns a zero parameter gradient.  This instance needs
 -- @MergeZero (->) p@ because the parameter type must supply both @zero@ (for
--- 'id') and @plus@ (for composing gradients).
+-- 'id') and @merge@ (for composing gradients).
 --
 -- >>> let inc = DiffP (\() x -> (x + 1, \dy -> (dy, ()))) :: DiffP () Int Int
 -- >>> let dbl = DiffP (\() x -> (2 * x, \dy -> (2 * dy, ()))) :: DiffP () Int Int
@@ -109,7 +109,7 @@ toPrim (DiffP f) = TensorPrim (\p a -> fst (f p a)) (\p a db -> snd (f p a) db)
 --
 -- Parameter gradients from both composed arrows accumulate (not just the
 -- outer one).  @addParam@ contributes @dpG = dy@; @dblParam@ contributes
--- @dpF = dc@; composition must sum them via 'CB.plus'.
+-- @dpF = dc@; composition must sum them via 'CB.merge'.
 --
 -- >>> let addParam = DiffP (\p x -> (x + p, \dy -> (dy, dy))) :: DiffP Int Int Int
 -- >>> let dblParam = DiffP (\p b -> (2 * b, \dc -> (2 * dc, dc))) :: DiffP Int Int Int
@@ -129,7 +129,7 @@ instance (MergeZero (->) p) => Category (DiffP p) where
           \dc ->
             let (db, dpF) = fBack dc
                 (da, dpG) = gBack db
-             in (da, CB.plus (dpF, dpG))
+             in (da, CB.merge (dpF, dpG))
         )
   {-# INLINE (.) #-}
 
@@ -149,9 +149,9 @@ instance (MergeZero (->) p) => Assoc (,) (DiffP p) where
   assoc' = DiffP $ \_ (a, (b, c)) -> (((a, b), c), \((da, db), dc) -> ((da, (db, dc)), CB.zero ()))
   {-# INLINE assoc' #-}
 
-instance (MergeZero (->) p) => Slide (,) (DiffP p) where
-  slide = DiffP $ \_ (a, (b, c)) -> ((b, (a, c)), \(db, (da, dc)) -> ((da, (db, dc)), CB.zero ()))
-  {-# INLINE slide #-}
+instance (MergeZero (->) p) => OuterSwap (,) (DiffP p) where
+  outerSwap = DiffP $ \_ (a, (b, c)) -> ((b, (a, c)), \(db, (da, dc)) -> ((da, (db, dc)), CB.zero ()))
+  {-# INLINE outerSwap #-}
 
 ----------------------------------------------------------------------
 -- Monoidal product of morphisms
@@ -162,7 +162,7 @@ instance (MergeZero (->) p) => Slide (,) (DiffP p) where
 --
 -- The parameter is treated as an input value, not a state, so it can be
 -- passed to both branches without a comonoid structure.  Only the output
--- gradients need @plus@.
+-- gradients need @merge@.
 --
 -- >>> let inc = DiffP (\() x -> (x + 1, \dy -> (dy, ()))) :: DiffP () Int Int
 -- >>> let dbl = DiffP (\() x -> (2 * x, \dy -> (2 * dy, ()))) :: DiffP () Int Int
@@ -189,13 +189,13 @@ instance (MergeZero (->) p) => SemiTensor (,) (DiffP p) where
           \(db, dd) ->
             let (da, dpF) = fBack db
                 (dc, dpG) = gBack dd
-             in ((da, dc), CB.plus (dpF, dpG))
+             in ((da, dc), CB.merge (dpF, dpG))
         )
   {-# INLINE tensor #-}
 
 instance (MergeZero (->) p) => Tensor (,) (DiffP p)
 
-instance (MergeZero (->) p) => Action (,) (DiffP p) where
+instance (MergeZero (->) p) => Symmetric (,) (DiffP p) where
   braid = DiffP $ \_ (a, b) -> ((b, a), \(db, da) -> ((da, db), CB.zero ()))
   {-# INLINE braid #-}
 
@@ -210,7 +210,7 @@ instance (MergeZero (->) p) => Action (,) (DiffP p) where
 -- >>> pb (1, 2)
 -- (3,())
 instance (Merge (->) a, Zero (->) p) => Copy (DiffP p) a where
-  copy = DiffP $ \_ a -> ((a, a), \(da1, da2) -> (CB.plus (da1, da2), CB.zero ()))
+  copy = DiffP $ \_ a -> ((a, a), \(da1, da2) -> (CB.merge (da1, da2), CB.zero ()))
   {-# INLINE copy #-}
 
 instance (Zero (->) a, Zero (->) p) => Discard (DiffP p) a where
@@ -220,12 +220,12 @@ instance (Zero (->) a, Zero (->) p) => Discard (DiffP p) a where
 -- | Add in 'DiffP': forward add, backward copy.  The parameter gradient is
 -- zero because addition has no parameters.
 --
--- >>> let (_, pb) = runDiffP plus () ((3, 4) :: (Int, Int))
+-- >>> let (_, pb) = runDiffP merge () ((3, 4) :: (Int, Int))
 -- >>> pb 1
 -- ((1,1),())
 instance (Merge (->) a, Zero (->) p) => Merge (DiffP p) a where
-  plus = DiffP $ \_ (a, b) -> (CB.plus (a, b), \d -> ((d, d), CB.zero ()))
-  {-# INLINE plus #-}
+  merge = DiffP $ \_ (a, b) -> (CB.merge (a, b), \d -> ((d, d), CB.zero ()))
+  {-# INLINE merge #-}
 
 instance (Zero (->) a, Zero (->) p) => Zero (DiffP p) a where
   zero = DiffP $ \_ () -> (CB.zero (), const ((), CB.zero ()))

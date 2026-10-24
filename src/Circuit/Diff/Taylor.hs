@@ -50,8 +50,8 @@ import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), Zero (..))
 import Circuit.Category (Category (..))
 import Circuit.Diff (Diff, runDiff)
 import Circuit.Diff.Jet (Jet (..), constant, variable)
-import Circuit.Tensor (Action (..), SemiTensor (..), Tensor, Unital (..))
-import Circuit.Traced (Assoc (..), Slide (..), Strength (..), Yank (..))
+import Circuit.Tensor (SemiTensor (..), Symmetric (..), Tensor, Unital (..))
+import Circuit.Traced (Assoc (..), OuterSwap (..), Strength (..), Trace (..))
 import Data.Proxy (Proxy (..))
 import GHC.TypeNats (KnownNat, Nat, natVal, someNatVal)
 import NumHask.Algebra.Additive qualified as NA
@@ -107,10 +107,10 @@ instance Assoc (,) (Taylor n) where
     VP x (VP y z) -> VP (VP x y) z
   {-# INLINE assoc' #-}
 
-instance Slide (,) (Taylor n) where
-  slide = Taylor $ \case
+instance OuterSwap (,) (Taylor n) where
+  outerSwap = Taylor $ \case
     VP x (VP y z) -> VP y (VP x z)
-  {-# INLINE slide #-}
+  {-# INLINE outerSwap #-}
 
 instance Strength (,) (Taylor n) where
   strength (Taylor f) = Taylor $ \case
@@ -139,7 +139,7 @@ instance SemiTensor (,) (Taylor n) where
 
 instance Tensor (,) (Taylor n)
 
-instance Action (,) (Taylor n) where
+instance Symmetric (,) (Taylor n) where
   braid = Taylor $ \case
     VP x y -> VP y x
   {-# INLINE braid #-}
@@ -148,11 +148,11 @@ instance Action (,) (Taylor n) where
 -- Trace: lazy knot on the value shape
 -- ---------------------------------------------------------------------------
 
-instance Yank (,) (Taylor n) where
-  yank (Taylor body) = Taylor $ \b ->
+instance Trace (,) (Taylor n) where
+  trace (Taylor body) = Taylor $ \b ->
     let VP a c = body (VP a b)
      in c
-  {-# INLINE yank #-}
+  {-# INLINE trace #-}
 
 -- ---------------------------------------------------------------------------
 -- Bimonoid structure for the unit and for scalar 'Double'
@@ -167,8 +167,8 @@ instance Discard (Taylor n) () where
   {-# INLINE discard #-}
 
 instance Merge (Taylor n) () where
-  plus = Taylor $ \(VP VT VT) -> VT
-  {-# INLINE plus #-}
+  merge = Taylor $ \(VP VT VT) -> VT
+  {-# INLINE merge #-}
 
 instance Zero (Taylor n) () where
   zero = Taylor $ \VT -> VT
@@ -183,8 +183,8 @@ instance Discard (Taylor n) Double where
   {-# INLINE discard #-}
 
 instance Merge (Taylor n) Double where
-  plus = Taylor $ \(VP (VD xs) (VD ys)) -> VD (addJets xs ys)
-  {-# INLINE plus #-}
+  merge = Taylor $ \(VP (VD xs) (VD ys)) -> VD (addJets xs ys)
+  {-# INLINE merge #-}
 
 instance (KnownNat n) => Zero (Taylor n) Double where
   zero = Taylor $ \VT -> VD (replicate (n + 1) 0)

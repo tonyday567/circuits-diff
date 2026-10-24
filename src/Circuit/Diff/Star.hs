@@ -181,13 +181,13 @@ traceStarMatrixD x0 n (Diff body) =
 -- 'Circuit.Diff.Backprop.linearizeBody' never need this — their structural rows
 -- are already pointwise pullbacks.)
 --
--- These instances remain necessary because structural rows ('Plus', 'Zero')
+-- These instances remain necessary because structural rows ('SigMerge', 'SigZero')
 -- carry 'MergeT' / 'ZeroT' constraints that resolve to 'Merge' / 'Zero' on
 -- the wiring arrow.  For 'Pullback FieldStar' those constraints bottom out in
 -- 'Merge (->) FieldStar' and 'Zero (->) FieldStar'.  Deliberately orphan: this
 -- module is the federation seam between @circuits@ and @numhask-free@.
 instance Circuit.Bimonoid.Merge (->) FieldStar where
-  plus (FieldStar x, FieldStar y) = FieldStar (x + y)
+  merge (FieldStar x, FieldStar y) = FieldStar (x + y)
 
 instance Circuit.Bimonoid.Zero (->) FieldStar where
   zero _ = FieldStar 0

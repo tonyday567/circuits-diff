@@ -109,7 +109,7 @@ runStarEliminateTests = do
       innerBody = Step (withStarChannelDiff fieldStarChannel innerBodyRaw)
       (FieldStar y, g) = linearizeBody innerBody (FieldStar 4.0)
       gElim = solveStarBody g
-      (_, FieldStar gLazy) = runPullback (run g) (fieldStarChannel, FieldStar 1.0)
+      (_, FieldStar gLazy) = runPullback (step g) (fieldStarChannel, FieldStar 1.0)
       FieldStar gElimVal = runPullback gElim (FieldStar 1.0)
   assert "lazy-knot value" y 4.0
   assert "lazy-knot gradient" gLazy 1.0

@@ -2,7 +2,7 @@
 
 module Main (main) where
 
-import Circuit (Syntax (Lift), Trace)
+import Circuit (FreeTrace, Syntax (Lift))
 import Circuit qualified
 import Circuit.Bimonoid qualified as Bm
 import Circuit.Category ((.))
@@ -14,7 +14,7 @@ import Circuit.Net qualified as SMC
 import Circuit.Pullback (Pullback (..), evalPullback)
 import Circuit.Syntax (Syntax (..), eval)
 import Circuit.Tensor (SemiTensor (..), Tensor)
-import Circuit.Traced (Yank (..))
+import Circuit.Traced (Trace (..))
 import DiffCarrierTests (runDiffCarrierTests)
 import Kepler (runKeplerTests)
 import MatrixStar (runMatrixStarTests)
@@ -46,7 +46,7 @@ constD c = Diff (const (c, const 0))
 
 -- | Net computing 2*x^2 via copy, parallel squares, then add.
 quadNet :: Net (,) Diff' Double Double
-quadNet = Lift (Bm.plusT @(,) @Diff' @Double) . widen (tensor (Lift sq) (Lift sq)) . Lift (Bm.copyT @(,) @Diff' @Double)
+quadNet = Lift (Bm.mergeT @(,) @Diff' @Double) . widen (tensor (Lift sq) (Lift sq)) . Lift (Bm.copyT @(,) @Diff' @Double)
 
 -- | Linear feedback loop: x' = 0.3*x + 2*b, c = x + b.
 loopBody :: Diff' (Double, Double) (Double, Double)
@@ -68,7 +68,7 @@ main = do
   assert "gradient" (pbLoop 1.0) (1.0 / (1.0 - 0.3) * 2.0 + 1.0)
 
   putStrLn "direct primitive via run"
-  let (yPrim, pbPrim) = runDiff (eval (Lift sq :: Trace (,) Diff' Double Double)) 3.0
+  let (yPrim, pbPrim) = runDiff (eval (Lift sq :: FreeTrace (,) Diff' Double Double)) 3.0
   assert "value" yPrim 9.0
   assert "gradient" (pbPrim 1.0) 6.0
 
@@ -99,7 +99,7 @@ main = do
   assert "gradient" (pb5 1.0) (-0.25)
 
   putStrLn "Trace Diff Either (scale-by-n loop)"
-  let scaleByN n = yank body
+  let scaleByN n = trace body
         where
           body :: Diff' (Either (Int, Double, Double) Double) (Either (Int, Double, Double) Double)
           body = Diff $ \case
@@ -129,7 +129,7 @@ main = do
                in (dsIn, (dx, db))
          in ((s', (ySq, o)), pb)
       (y7, g7) = linearizeBody netBody (3.0, 4.0)
-      (_, (gx, gb)) = runPullback (run g7) (0.0, (1.0, 1.0))
+      (_, (gx, gb)) = runPullback (step g7) (0.0, (1.0, 1.0))
   assert "value fst" (fst y7) 9.0
   assert "value snd" (snd y7) 8.0
   assert "gradient x" gx 6.0

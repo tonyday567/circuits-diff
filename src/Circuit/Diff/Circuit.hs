@@ -31,8 +31,8 @@ import Circuit.Bimonoid (Copy (..), Discard (..), Merge (..), MergeZero, Zero (.
 import Circuit.Bimonoid qualified as CB
 import Circuit.Category (Category (..))
 import Circuit.Diff (Diff (..), Diff', runDiff)
-import Circuit.Tensor (Action (..), SemiTensor (..), Tensor, Unital (..))
-import Circuit.Traced (Assoc (..), Slide (..), Strength (..), Yank (..))
+import Circuit.Tensor (SemiTensor (..), Symmetric (..), Tensor, Unital (..))
+import Circuit.Traced (Assoc (..), OuterSwap (..), Strength (..), Trace (..))
 import Data.Bifunctor
 import NumHask.Algebra.Additive qualified as NHA
 import NumHask.Algebra.Multiplicative qualified as NHM
@@ -41,13 +41,13 @@ import Prelude hiding (id, (.))
 
 -- $setup
 -- >>> import Circuit.Bimonoid (Copy (..), Merge (..))
--- >>> import Circuit.Tensor (Action (..), SemiTensor (..), Tensor)
+-- >>> import Circuit.Tensor (SemiTensor (..), Symmetric (..), Tensor)
 
 -- | 'Circuit.Category.Category' for 'Diff'.
 --
 -- 'Circuit.Diff still provides 'Control.Category'; circuits needs the local
 -- 'Category' with associated 'Ob' (default @()@) so 'Monoidal' / 'Traced' /
--- free 'Trace' folds typecheck after kind-gen.
+-- free 'FreeTrace' folds typecheck after kind-gen.
 instance Category (Diff p) where
   id = Diff (\a -> (a, id))
   Diff f . Diff g = Diff $ \a ->
@@ -82,8 +82,8 @@ instance Category (Diff p) where
 -- because GHC's heap holds the graph.  For linear backward maps this is a
 -- Neumann series computed lazily; for general maps it is the implicit function
 -- theorem as a lazy knot.
-instance Yank (,) (Diff p) where
-  yank (Diff body) = Diff $ \b ->
+instance Trace (,) (Diff p) where
+  trace (Diff body) = Diff $ \b ->
     let -- Forward: standard lazy knot
         ~((a, c), backward) = body (a, b)
         -- Backward: same shape, transposed — knot through the pair
@@ -97,8 +97,8 @@ instance Assoc (,) (Diff p) where
   assoc = Diff (\((s, s'), x) -> ((s, (s', x)), \(s'', (s''', x')) -> ((s'', s'''), x')))
   assoc' = Diff (\(s, (s', x)) -> (((s, s'), x), \((s'', s'''), x') -> (s'', (s''', x'))))
 
-instance Slide (,) (Diff p) where
-  slide = Diff (\(s, (s', x)) -> ((s', (s, x)), \(s'', (s''', x')) -> (s''', (s'', x'))))
+instance OuterSwap (,) (Diff p) where
+  outerSwap = Diff (\(s, (s', x)) -> ((s', (s, x)), \(s'', (s''', x')) -> (s''', (s'', x'))))
 
 -- | Cocartesian channel plumbing for 'Diff.
 instance Assoc Either (Diff p) where
@@ -117,13 +117,13 @@ instance Assoc Either (Diff p) where
           Right (Right c) -> (Right c, \case Right dc -> Right (Right dc); _ -> error "assoc'")
       )
 
-instance Slide Either (Diff p) where
-  slide =
+instance OuterSwap Either (Diff p) where
+  outerSwap =
     Diff
       ( \case
-          Left a -> (Right (Left a), \case Right (Left da) -> Left da; _ -> error "slide")
-          Right (Left b) -> (Left b, \case Left db -> Right (Left db); _ -> error "slide")
-          Right (Right c) -> (Right (Right c), \case Right (Right dc) -> Right (Right dc); _ -> error "slide")
+          Left a -> (Right (Left a), \case Right (Left da) -> Left da; _ -> error "outerSwap")
+          Right (Left b) -> (Left b, \case Left db -> Right (Left db); _ -> error "outerSwap")
+          Right (Right c) -> (Right (Right c), \case Right (Right dc) -> Right (Right dc); _ -> error "outerSwap")
       )
 
 -- | Cartesian tensorial strength for 'Diff.
@@ -161,8 +161,8 @@ instance Strength Either (Diff p) where
 -- is in.  Every honest pullback maps an output-tagged cotangent to an
 -- input-tagged one; the replay errors loudly on any mismatch rather
 -- than misreading a dishonest primitive.
-instance Yank Either (Diff p) where
-  yank (Diff body) = Diff $ \b ->
+instance Trace Either (Diff p) where
+  trace (Diff body) = Diff $ \b ->
     let -- Forward: iterate, collecting pullbacks in execution order.
         goFwd x =
           let (y, pb) = body x
@@ -198,20 +198,20 @@ instance Yank Either (Diff p) where
 -- differentiable arrow.
 --
 -- In Diff, the bimonoid is self-dual under differentiation: copy's pullback
--- is plus, discard's pullback is zero, plus's pullback is copy, zero's
--- pullback is discard.  transpose's Copy ↔ Add, Discard ↔ Zero table is
+-- is merge, discard's pullback is zero, merge's pullback is copy, zero's
+-- pullback is discard.  The 'dagger' Copy ↔ Merge, Discard ↔ Zero table is
 -- not a rule imposed on syntax — it's the instance structure of Diff read
 -- off at the semantic level.
 
--- | Copy in D: the pullback is 'plus' (fan-in on the backward pass).
+-- | Copy in D: the pullback is 'merge' (fan-in on the backward pass).
 --
--- >>> import Circuit.Tensor (Action(..))
+-- >>> import Circuit.Tensor (Symmetric(..))
 -- >>> import Circuit.Bimonoid (Copy(..), Merge(..))
 -- >>> let (_, pb) = runDiff (copy :: Diff' Int (Int, Int)) 5
 -- >>> pb (1, 2)
 -- 3
 instance (Merge (->) a) => Copy (Diff p) a where
-  copy = Diff (\a -> ((a, a), CB.plus))
+  copy = Diff (\a -> ((a, a), CB.merge))
   {-# INLINE copy #-}
 
 instance (Zero (->) a) => Discard (Diff p) a where
@@ -220,12 +220,12 @@ instance (Zero (->) a) => Discard (Diff p) a where
 
 -- | Add in D: the pullback is 'copy' (fan-out on the backward pass).
 --
--- >>> let (_, pb) = runDiff (plus :: Diff' (Int, Int) Int) (3, 4)
+-- >>> let (_, pb) = runDiff (merge :: Diff' (Int, Int) Int) (3, 4)
 -- >>> pb 1
 -- (1,1)
 instance (Merge (->) a) => Merge (Diff p) a where
-  plus = Diff (\(a, b) -> (CB.plus (a, b), \d -> (d, d)))
-  {-# INLINE plus #-}
+  merge = Diff (\(a, b) -> (CB.merge (a, b), \d -> (d, d)))
+  {-# INLINE merge #-}
 
 instance (Zero (->) a) => Zero (Diff p) a where
   zero = Diff (\() -> (CB.zero (), const ()))
@@ -258,7 +258,7 @@ instance SemiTensor (,) (Diff p) where
 
 instance Tensor (,) (Diff p)
 
-instance Action (,) (Diff p) where
+instance Symmetric (,) (Diff p) where
   braid = Diff (\(a, b) -> ((b, a), \(db, da) -> (da, db)))
   {-# INLINE braid #-}
 
@@ -353,7 +353,7 @@ traceStarFrom x0 n (Diff body) = Diff $ \b ->
 -- @Circuit.Diff.Star.traceStarMatrix@ (vector channel, solved by
 -- 'Circuit.Mat.Dense.starMatrix' — the bridge made literal).
 traceStar :: Diff p (j, b) (j, c) -> Diff p b c
-traceStar = yank
+traceStar = trace
 
 -- | Iterated trace for strict carriers.
 --
@@ -369,7 +369,7 @@ traceStar = yank
 --     The backward equation is guaranteed affine (calculus promises
 --     linearity in cotangents), so 'zero' is the principled seed.
 --     The Neumann summation happens /inside/ the iteration — no
---     double-counting, and 'plus' retreats to where the theory says
+--     double-counting, and 'merge' retreats to where the theory says
 --     it lives: inside prims and 'Copy'.
 --
 -- Lives beside the lawful-but-lazy instance, not replacing it.
@@ -395,7 +395,7 @@ traceNFrom x0 n (Diff body) = Diff $ \b ->
 -- Smoke test: quadratic — the term that was impossible in Stage 1
 -- ---------------------------------------------------------------------------
 
--- | @2x² + 3x + 5@ built from 'tensor', 'dup', and 'plus' on the @Diff@ arrow.
+-- | @2x² + 3x + 5@ built from 'tensor', 'dup', and 'merge' on the @Diff@ arrow.
 -- No 'Net' needed — the instances are the denotations the rows will realise to.
 --
 -- The gradient is @4x + 3@, so at @x = 1@: value 10, gradient 7.
@@ -406,7 +406,7 @@ traceNFrom x0 n (Diff body) = Diff $ \b ->
 -- >>> pb 1.0
 -- 7.0
 quadD :: Diff p Double Double
-quadD = CB.plus . tensor sq lin . CB.copy
+quadD = CB.merge . tensor sq lin . CB.copy
   where
     sq = Diff (\x -> (2 * x * x, \d -> 4 * x * d))
     lin = Diff (\x -> (3 * x + 5, (3 *)))
