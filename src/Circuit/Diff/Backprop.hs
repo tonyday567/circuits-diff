@@ -38,7 +38,7 @@ import Circuit.Bimonoid
 import Circuit.Category ((.))
 import Circuit.Diff (Diff (..), Diff', runDiff)
 import Circuit.Diff.Circuit ()
-import Circuit.Machine (Step (..))
+import Circuit.Step (Step (..))
 import Circuit.Net (Net, SMC, SigPar (..), SigSwap (..), widen)
 import Circuit.Net qualified as SMC
 import Circuit.Pullback (Pullback (..))

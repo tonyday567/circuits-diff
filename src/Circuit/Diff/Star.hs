@@ -40,7 +40,7 @@ import Circuit.Bimonoid (Merge, MergeZero, Zero)
 import Circuit.Bimonoid qualified as CB
 import Circuit.Diff.Circuit (Diff (..), traceStarFrom)
 import Circuit.Diff.Evidence (StarChannel (..))
-import Circuit.Machine (Step (..))
+import Circuit.Step (Step (..))
 import Circuit.Mat.Dense (fromLists, matVec)
 import Circuit.Mat.Dense qualified as MD
 import Circuit.Pullback (Pullback (..))
@@ -51,7 +51,7 @@ import NumHask.Free.Carriers (FieldStar (..))
 import NumHask.Prelude
 
 -- $setup
--- >>> import Circuit.Machine (Step (..))
+-- >>> import Circuit.Step (Step (..))
 -- >>> import Circuit.Diff.Circuit
 -- >>> import Circuit.Diff.Evidence (StarChannel (..), fieldStarChannel, withStarChannel)
 -- >>> import Circuit.Pullback (Pullback (..))
