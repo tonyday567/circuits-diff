@@ -8,7 +8,7 @@ import Circuit.Bimonoid qualified as Bm
 import Circuit.Category ((.))
 import Circuit.Diff.Backprop (linearizeAt, linearizeBody)
 import Circuit.Diff.Circuit (Diff (..), Diff', runDiff, traceNFrom)
-import Circuit.Machine (Step (..))
+import Circuit.Step (Step (..))
 import Circuit.Net (Net, widen)
 import Circuit.Net qualified as SMC
 import Circuit.Pullback (Pullback (..), evalPullback)
